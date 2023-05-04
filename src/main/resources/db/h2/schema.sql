@@ -1,42 +1,42 @@
-DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS question CASCADE;
-DROP TABLE IF EXISTS comment CASCADE;
+drop table IF EXISTS users CASCADE;
+drop table IF EXISTS question CASCADE;
+drop table IF EXISTS comment CASCADE;
 
-CREATE TABLE users
+create TABLE users
 (
     id       bigint auto_increment,
-    userId   VARCHAR(255) NOT NULL,
-    name     VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-    email    VARCHAR(255) NOT NULL,
+    USERID   VARCHAR(255) NOT NULL,
+    NAME     VARCHAR(255) NOT NULL,
+    PASSWORD VARCHAR(255) NOT NULL,
+    EMAIL    VARCHAR(255) NOT NULL,
     primary key (id)
 );
 
 
-CREATE TABLE question
+create TABLE question
 (
     id         bigint auto_increment,
     title      VARCHAR(255) NOT NULL,
     content    TEXT         NOT NULL,
     createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modifyTime TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+    modifyTime TIMESTAMP DEFAULT NULL ON update CURRENT_TIMESTAMP,
     deleted    boolean   DEFAULT false,
     userId     bigint       NOT NULL,
     primary key (id),
-    foreign key (userId) references users (id) ON DELETE CASCADE
+    foreign key (userId) references users (id) ON delete CASCADE
 );
 
 
-CREATE TABLE comment
+create TABLE comment
 (
-    id         bigint auto_increment,
-    content    VARCHAR(3000) NOT NULL,
-    createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    modifyTime TIMESTAMP DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-    deleted    boolean   DEFAULT false,
-    userId     bigint        NOT NULL,
-    questionId bigint        NOT NULL,
+    ID         bigint auto_increment,
+    CONTENT    VARCHAR(3000) NOT NULL,
+    CREATETIME TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    MODIFYTIME TIMESTAMP DEFAULT NULL ON update CURRENT_TIMESTAMP,
+    DELETED    boolean   DEFAULT false,
+    USERID     bigint        NOT NULL,
+    QUESTIONID bigint        NOT NULL,
     primary key (id),
-    foreign key (userId) references users (id) ON DELETE CASCADE,
-    foreign key (questionId) references question (id) ON DELETE CASCADE
+    foreign key (USERID) references users (id) ON delete CASCADE,
+    foreign key (QUESTIONID) references question (id) ON delete CASCADE
 );
