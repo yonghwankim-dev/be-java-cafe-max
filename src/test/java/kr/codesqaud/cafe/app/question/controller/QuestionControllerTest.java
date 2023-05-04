@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import kr.codesqaud.cafe.app.comment.controller.dto.CommentResponse;
 import kr.codesqaud.cafe.app.comment.controller.dto.CommentSavedRequest;
 import kr.codesqaud.cafe.app.comment.repository.CommentRepository;
 import kr.codesqaud.cafe.app.comment.service.CommentService;
@@ -47,6 +48,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.ui.ModelMap;
 
 @Transactional
 @AutoConfigureMockMvc
@@ -85,24 +87,20 @@ class QuestionControllerTest {
         objectMapper.registerModule(new JavaTimeModule());
         httpSession = new MockHttpSession();
         userId = signUp("yonghwan1107", "yonghwan1107", "김용환", "yonghwan1107@gmail.com");
-        questionId = writeQuestion();
-        writeComment(questionId, userId);
+        questionId = writeQuestion("제목1", "내용1", "yonghwan1107");
+        for (int i = 1; i <= 45; i++) {
+            writeComment(questionId, userId, "댓글" + i);
+        }
     }
 
-
-    public Long writeQuestion() {
-        User user = userService.findUser("yonghwan1107").toEntity();
-        String title = "제목1";
-        String content = "내용1";
+    public Long writeQuestion(String title, String content, String userId) {
+        User user = userService.findUser(userId).toEntity();
         QuestionSavedRequest dto = new QuestionSavedRequest(title, content, user.getId());
         return questionService.writeQuestion(dto).getId();
     }
 
-    public void writeComment(Long questionId, Long userId) {
-        CommentSavedRequest dto1 = new CommentSavedRequest("댓글1", questionId, userId);
-        CommentSavedRequest dto2 = new CommentSavedRequest("댓글2", questionId, userId);
-        commentService.answerComment(dto1);
-        commentService.answerComment(dto2);
+    public void writeComment(Long questionId, Long userId, String content) {
+        commentService.answerComment(new CommentSavedRequest(content, questionId, userId));
     }
 
     @Test
@@ -175,13 +173,16 @@ class QuestionControllerTest {
         login("yonghwan1107", "yonghwan1107");
         String url = "/qna/" + questionId;
         //when
-        QuestionResponse question = (QuestionResponse) Objects.requireNonNull(
+        ModelMap modelMap = Objects.requireNonNull(
             mockMvc.perform(get(url).session(httpSession)).andExpect(status().isOk()).andReturn()
-                .getModelAndView()).getModelMap().get("question");
+                .getModelAndView()).getModelMap();
         //then
+        QuestionResponse question = (QuestionResponse) modelMap.get("question");
+        List<CommentResponse> comments = (List<CommentResponse>) modelMap.get("comments");
         assertThat(question.getTitle()).isEqualTo("제목1");
         assertThat(question.getContent()).isEqualTo("내용1");
         assertThat(question.getWriter()).isEqualTo("김용환");
+        assertThat(comments.size()).isEqualTo(15);
     }
 
     @Test

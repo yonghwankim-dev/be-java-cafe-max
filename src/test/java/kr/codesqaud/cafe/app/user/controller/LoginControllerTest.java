@@ -5,14 +5,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import kr.codesqaud.cafe.CafeTestUtil;
 import kr.codesqaud.cafe.app.user.controller.dto.UserLoginRequest;
 import kr.codesqaud.cafe.app.user.controller.dto.UserResponse;
-import kr.codesqaud.cafe.app.user.controller.dto.UserSavedRequest;
+import kr.codesqaud.cafe.app.user.entity.User;
 import kr.codesqaud.cafe.app.user.repository.UserRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
@@ -38,15 +38,24 @@ class LoginControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CafeTestUtil util;
+
     private MockHttpSession session;
 
+    @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
-    public void beforeEach() throws Exception {
-        objectMapper = new ObjectMapper();
+    public void beforeEach() {
         session = new MockHttpSession();
-        createSampleUser("yonghwan1107", "yonghwan1107", "김용환", "yonghwan1107@naver.com");
+        User user = User.builder()
+            .userId("yonghwan1107")
+            .password("yonghwan1107")
+            .name("김용환")
+            .email("yonghwan1107@naver.com")
+            .build();
+        util.signUp(user);
     }
 
     @AfterEach
@@ -67,7 +76,7 @@ class LoginControllerTest {
         mockMvc.perform(post(url)
                 .session(session)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(redirectedUrl("/"));
         //then
         UserResponse user = (UserResponse) session.getAttribute("user");
@@ -88,7 +97,7 @@ class LoginControllerTest {
         String jsonError = mockMvc.perform(post(url)
                 .session(session)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(status().isBadRequest())
             .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
@@ -112,7 +121,7 @@ class LoginControllerTest {
         String jsonError = mockMvc.perform(post(url)
                 .session(session)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(status().isBadRequest())
             .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
@@ -136,7 +145,7 @@ class LoginControllerTest {
         String jsonError = mockMvc.perform(post(url)
                 .session(session)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(status().isBadRequest())
             .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
@@ -146,19 +155,5 @@ class LoginControllerTest {
         Assertions.assertThat(errorMap.get("httpStatus")).isEqualTo("BAD_REQUEST");
         Assertions.assertThat(errorMap.get("name")).isEqualTo("NOT_MATCH_LOGIN");
         Assertions.assertThat(errorMap.get("errorMessage")).isEqualTo("아이디 또는 비밀번호가 일치하지 않습니다.");
-    }
-
-    private void createSampleUser(String userId, String password, String name, String email)
-        throws Exception {
-        String url = "/users";
-        UserSavedRequest dto = new UserSavedRequest(userId, password, name, email);
-        mockMvc.perform(post(url)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
-            .andExpect(status().isOk());
-    }
-
-    private <T> String toJSON(T data) throws JsonProcessingException {
-        return new ObjectMapper().writeValueAsString(data);
     }
 }

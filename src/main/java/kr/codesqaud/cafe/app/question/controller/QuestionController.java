@@ -68,10 +68,12 @@ public class QuestionController {
 
     // 특정 질문 조회
     @GetMapping("/qna/{id}")
-    public ModelAndView detailQuestion(@PathVariable(value = "id") Long id) {
+    public ModelAndView detailQuestion(
+        @PathVariable(value = "id") Long id) {
         ModelAndView mav = new ModelAndView("qna/detail");
+        Long cursor = 0L;
         mav.addObject("question", questionService.findQuestion(id));
-        mav.addObject("comments", commentService.getComments(id));
+        mav.addObject("comments", commentService.getCommentsByCursor(id, cursor));
         return mav;
     }
 

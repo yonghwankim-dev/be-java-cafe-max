@@ -8,13 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Objects;
-import kr.codesqaud.cafe.app.user.controller.dto.UserLoginRequest;
+import kr.codesqaud.cafe.CafeTestUtil;
 import kr.codesqaud.cafe.app.user.controller.dto.UserResponse;
 import kr.codesqaud.cafe.app.user.controller.dto.UserSavedRequest;
 import kr.codesqaud.cafe.app.user.entity.User;
@@ -46,40 +45,48 @@ class UserControllerTest {
     @Autowired
     private UserService userService;
 
-    private MockHttpSession session;
-
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private CafeTestUtil util;
+
+    private MockHttpSession session;
+
     private Long id;
+
+    private User user;
 
     @BeforeEach
     public void setup() {
         session = new MockHttpSession();
-        id = signup("yonghwan1107", "yonghwan1107", "김용환", "yonghwan1107@naver.com");
+        user = User.builder()
+            .userId("yonghwan1107")
+            .password("yonghwan1107")
+            .name("김용환")
+            .email("yonghwan1107@naver.com")
+            .build();
+        id = util.signUp(user);
     }
 
     @Test
     @DisplayName("올바른 회원정보가 주어지고 회원가입 요청시 회원가입이 되는지 테스트")
     public void signup_success() throws Exception {
         //given
-        String userId = "kim1107";
-        String password = "kim1107kim1107";
-        String name = "김용일";
-        String email = "kim1107@naver.com";
         String url = "/users";
-        UserSavedRequest dto = new UserSavedRequest(userId, password, name, email);
+        UserSavedRequest dto =
+            new UserSavedRequest("kim1107", "kim1107kim1107@", "김용환", "kim1107@naver.com");
         //when
         mockMvc.perform(post(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(status().isOk());
         //then
-        User user = userRepository.findByUserId(userId).orElseThrow();
-        assertThat(user.getUserId()).isEqualTo(userId);
-        assertThat(user.getPassword()).isEqualTo(password);
-        assertThat(user.getName()).isEqualTo(name);
-        assertThat(user.getEmail()).isEqualTo(email);
+        User user = userRepository.findByUserId("kim1107").orElseThrow();
+        assertThat(user.getUserId()).isEqualTo("kim1107");
+        assertThat(user.getPassword()).isEqualTo("kim1107kim1107@");
+        assertThat(user.getName()).isEqualTo("김용환");
+        assertThat(user.getEmail()).isEqualTo("kim1107@naver.com");
     }
 
     @Test
@@ -95,7 +102,7 @@ class UserControllerTest {
         //when
         String jsonError = mockMvc.perform(post(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(status().isConflict())
             .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
@@ -121,7 +128,7 @@ class UserControllerTest {
         //when
         String jsonError = mockMvc.perform(post(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(status().isConflict())
             .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
@@ -147,7 +154,7 @@ class UserControllerTest {
         //when
         String jsonError = mockMvc.perform(post(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(status().isBadRequest())
             .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
@@ -163,7 +170,7 @@ class UserControllerTest {
     @DisplayName("특정 회원의 id가 주어지고 회원의 프로필이 검색되는지 테스트")
     public void profile() throws Exception {
         //given
-        login("yonghwan1107", "yonghwan1107");
+        util.login(user.getUserId(), user.getPassword(), session);
         String url = "/users/" + id;
         //when
         UserResponse actual =
@@ -182,7 +189,7 @@ class UserControllerTest {
     @DisplayName("비밀번호, 이름, 이메일이 주어지고 유저아이디가 주어질때 회원정보 수정이 되는지 테스트")
     public void modify_success() throws Exception {
         //given
-        login("yonghwan1107", "yonghwan1107");
+        util.login(user.getUserId(), user.getPassword(), session);
         String userId = "yonghwan1107";
         String password = "yonghwan1107";
         String modifiedName = "홍길동";
@@ -192,7 +199,7 @@ class UserControllerTest {
         //when
         mockMvc.perform(put(url)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto))
+                .content(util.toJSON(dto))
                 .session(session))
             .andExpect(status().isOk());
         //then
@@ -205,12 +212,17 @@ class UserControllerTest {
     @DisplayName("회원 수정 이메일 중복으로 인한 테스트")
     public void modify_fail() throws Exception {
         //given
-        signup("kim1107", "kim1107kim1107", "kim", "kim@naver.com");
-        login("yonghwan1107", "yonghwan1107");
+        util.signUp(User.builder()
+            .userId("kim1107")
+            .password("kim1107")
+            .name("김용환")
+            .email("kim1107@naver.com")
+            .build());
+        util.login("yonghwan1107", "yonghwan1107", session);
         String userId = "yonghwan1107";
         String password = "yonghwan1107";
         String modifiedName = "김용환";
-        String duplicatedEmail = "kim@naver.com";
+        String duplicatedEmail = "kim1107@naver.com";
         String url = "/users/" + id;
         UserSavedRequest dto =
             new UserSavedRequest(userId, password, modifiedName, duplicatedEmail);
@@ -218,7 +230,7 @@ class UserControllerTest {
         String jsonError = mockMvc.perform(put(url)
                 .session(session)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(status().isConflict())
             .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
@@ -245,8 +257,13 @@ class UserControllerTest {
     @DisplayName("다른 사람으로 로그인하였는데 다른 회원의 정보를 수정하려고 할때 에러 페이지로 리다이렉션 하고 에러 메시지를 받는지 테스트")
     public void modify_fail3() throws Exception {
         //given
-        signup("kim1107", "kim1107kim1107", "kim", "kim@naver.com");
-        login("kim1107", "kim1107kim1107");
+        util.signUp(User.builder()
+            .userId("kim1107")
+            .password("kim1107")
+            .name("김용환")
+            .email("kim1107@naver.com")
+            .build());
+        util.login("kim1107", "kim1107", session);
         String userId = "yonghwan1107";
         String password = "yonghwan1107";
         String modifiedName = "홍길동";
@@ -257,7 +274,7 @@ class UserControllerTest {
         String jsonError = mockMvc.perform(put(url)
                 .session(session)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(toJSON(dto)))
+                .content(util.toJSON(dto)))
             .andExpect(status().isForbidden())
             .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
@@ -273,7 +290,7 @@ class UserControllerTest {
     @DisplayName("클라이언트가 존재하지 않는 회원 등록번호를 이용하여 특정 회원 조회 요청시 404 페이지로 이동합니다.")
     public void givenNotExistUserId_whenListUser_then404() throws Exception {
         //given
-        login("yonghwan1107", "yonghwan1107");
+        util.login(user.getUserId(), user.getPassword(), session);
         long id = 9999L;
         String url = "/users/" + id;
         //when & then
@@ -283,18 +300,4 @@ class UserControllerTest {
             .andExpect(view().name("error/404"));
     }
 
-    private Long signup(String userId, String password, String name, String email) {
-        return userService.signUp(new UserSavedRequest(userId, password, name, email)).getId();
-    }
-
-    private void login(String userId, String password) throws Exception {
-        mockMvc.perform(post("/login")
-            .content(toJSON(new UserLoginRequest(userId, password)))
-            .contentType(MediaType.APPLICATION_JSON)
-            .session(session));
-    }
-
-    private <T> String toJSON(T data) throws JsonProcessingException {
-        return new ObjectMapper().writeValueAsString(data);
-    }
 }
