@@ -18,10 +18,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import kr.codesqaud.cafe.app.comment.controller.dto.CommentSavedRequest;
 import kr.codesqaud.cafe.app.comment.repository.CommentRepository;
 import kr.codesqaud.cafe.app.comment.service.CommentService;
+import kr.codesqaud.cafe.app.common.pagination.Pagination;
 import kr.codesqaud.cafe.app.question.controller.dto.QuestionResponse;
 import kr.codesqaud.cafe.app.question.controller.dto.QuestionSavedRequest;
 import kr.codesqaud.cafe.app.question.entity.Question;
@@ -36,6 +38,8 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -289,6 +293,59 @@ class QuestionControllerTest {
         //when & then
         mockMvc.perform(get(url).session(httpSession)).andExpect(status().isNotFound())
             .andExpect(view().name("error/404"));
+    }
+
+    @Test
+    @DisplayName("페이지 번호가 주어지고 전체 질문 게시글 조회 요청시 페이지 번호에 따른 게시물만 가져오는지 테스트")
+    public void pagination() throws Exception {
+        //given
+        String page = "2";
+        //when
+        Object result = Objects.requireNonNull(mockMvc.perform(get("/")
+                .param("page", page))
+            .andExpect(status().isOk())
+            .andReturn().getModelAndView().getModelMap().get("questions"));
+        List<QuestionResponse> questions = (List<QuestionResponse>) result;
+        //then
+        Assertions.assertThat(questions.size()).isEqualTo(15);
+    }
+
+    @Test
+    @DisplayName("최대 페이지보다 큰 페이지번호가 주어지고 질문 게시글 목록 요청시 최대 페이지로 이동하는지 테스트")
+    public void pagination_givenPageNumberLargerThanTheMaximumPage_whenListQuestion_thenMoveMaximumPage()
+        throws Exception {
+        //given
+        String page = "99999";
+        //when
+        Map<String, Object> modelMap = mockMvc.perform(get("/")
+                .param("page", page))
+            .andExpect(status().isOk())
+            .andReturn().getModelAndView().getModelMap();
+        List<QuestionResponse> questions = (List<QuestionResponse>) modelMap.get("questions");
+        Pagination pagination = (Pagination) modelMap.get("pagination");
+        //then
+        Assertions.assertThat(questions.size()).isEqualTo(11);
+        Assertions.assertThat(pagination.getCurrentPage()).isEqualTo(7);
+    }
+
+    @ParameterizedTest
+    @DisplayName("1페이지보다 작은수가 주어질때 질문 게시글 목록 요청시 첫번째 페이지로 이동하는지 테스트")
+    @ValueSource(strings = {"0", "-1", "aweofijawoeifj"})
+    public void pagination_givenPageNumberLessThanThe1Page_whenListQuestion_thenMove1Page(
+        String page)
+        throws Exception {
+        //given
+
+        //when
+        Map<String, Object> modelMap = mockMvc.perform(get("/")
+                .param("page", page))
+            .andExpect(status().isOk())
+            .andReturn().getModelAndView().getModelMap();
+        List<QuestionResponse> questions = (List<QuestionResponse>) modelMap.get("questions");
+        Pagination pagination = (Pagination) modelMap.get("pagination");
+        //then
+        Assertions.assertThat(questions.size()).isEqualTo(15);
+        Assertions.assertThat(pagination.getCurrentPage()).isEqualTo(1);
     }
 
     private Long signUp(String userId, String password, String name, String email) {
