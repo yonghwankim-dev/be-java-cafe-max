@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import kr.codesqaud.cafe.app.common.pagination.Pagination;
 import kr.codesqaud.cafe.app.question.entity.Question;
 import kr.codesqaud.cafe.app.user.entity.User;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ public class JdbcQuestionRepository implements QuestionRepository {
     public List<Question> findAll() {
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder.append(
-                "SELECT q.ID, q.TITLE, q.CONTENT, q.CREATETIME, u.ID uid, u.NAME ")
+                "SELECT q.ID, q.TITLE, q.CONTENT, q.CREATETIME, q.USERID, u.NAME ")
             .append("FROM question q INNER JOIN users u ON q.USERID = u.ID ")
             .append("WHERE q.DELETED = false ")
             .append("ORDER BY q.CREATETIME DESC");
@@ -42,10 +43,23 @@ public class JdbcQuestionRepository implements QuestionRepository {
     }
 
     @Override
+    public List<Question> findAllByPage(Pagination pagination) {
+        log.info("pagination endNumber : {}, startNumber : {}", pagination.getEndNumber(),
+            pagination.getStartNumber());
+        return template.query(
+            "SELECT rn, id, title, content, createtime, rn, id, title, content, createtime, userid, name "
+                + "FROM (SELECT ROWNUM rn, q.id, title, content, createtime, q.userid, u.name "
+                + "FROM question q INNER JOIN users u ON q.USERID = u.ID "
+                + "WHERE ROWNUM <= ? AND DELETED = false) "
+                + "WHERE rn >= ?"
+            , questionRowMapper(), pagination.getEndNumber(), pagination.getStartNumber());
+    }
+
+    @Override
     public Optional<Question> findById(Long id) {
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder.append(
-                "SELECT q.ID, q.TITLE, q.CONTENT, q.CREATETIME, u.ID uid, u.NAME ")
+                "SELECT q.ID, q.TITLE, q.CONTENT, q.CREATETIME, q.USERID userid, u.NAME ")
             .append("FROM question q INNER JOIN users u ON q.USERID = u.ID ")
             .append("WHERE q.ID = ? and q.DELETED = false");
         List<Question> result = template.query(
@@ -87,7 +101,7 @@ public class JdbcQuestionRepository implements QuestionRepository {
                 .content(rs.getString("content"))
                 .createTime(rs.getTimestamp("createTime").toLocalDateTime())
                 .writer(User.builder()
-                    .id(rs.getLong("uid"))
+                    .id(rs.getLong("userid"))
                     .name(rs.getString("name"))
                     .build())
                 .build();
@@ -98,5 +112,10 @@ public class JdbcQuestionRepository implements QuestionRepository {
         Question delQuestion = findById(id).orElseThrow();
         template.update("UPDATE question SET deleted = true WHERE ID = ?", id);
         return delQuestion;
+    }
+
+    @Override
+    public Long findQuestionCount() {
+        return template.queryForObject("SELECT COUNT(*) FROM question", Long.class);
     }
 }

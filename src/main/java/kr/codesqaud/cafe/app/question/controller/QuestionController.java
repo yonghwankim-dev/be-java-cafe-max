@@ -4,6 +4,7 @@ import java.util.List;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import kr.codesqaud.cafe.app.comment.service.CommentService;
+import kr.codesqaud.cafe.app.common.pagination.Pagination;
 import kr.codesqaud.cafe.app.question.controller.dto.QuestionResponse;
 import kr.codesqaud.cafe.app.question.controller.dto.QuestionSavedRequest;
 import kr.codesqaud.cafe.app.question.service.QuestionService;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -35,11 +37,27 @@ public class QuestionController {
 
     // 전체 질문 목록 조회
     @GetMapping({"/", "/qna"})
-    public ModelAndView listQuestion() {
-        List<QuestionResponse> questions = questionService.getAllQuestion();
+    public ModelAndView listQuestion(
+        @RequestParam(value = "page", required = false, defaultValue = "1") String page) {
+        log.info("page : {}", page);
+        Long totalData = questionService.getTotalData();
+        Long currentPage = parsePageNumber(page);
+        Pagination pagination = new Pagination(totalData, currentPage);
+        List<QuestionResponse> questions = questionService.getAllQuestionByPage(pagination);
         ModelAndView mav = new ModelAndView("index");
         mav.addObject("questions", questions);
+        mav.addObject("pagination", pagination);
+        log.info("pagination : {}", pagination);
         return mav;
+    }
+
+    private Long parsePageNumber(String page) {
+        try {
+            long currentPage = Long.parseLong(page);
+            return Math.max(currentPage, 1);
+        } catch (NumberFormatException e) {
+            return 1L;
+        }
     }
 
     // 특정 질문 추가

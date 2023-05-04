@@ -3,6 +3,7 @@ package kr.codesqaud.cafe.app.question.service;
 import java.util.List;
 import java.util.stream.Collectors;
 import kr.codesqaud.cafe.app.comment.repository.CommentRepository;
+import kr.codesqaud.cafe.app.common.pagination.Pagination;
 import kr.codesqaud.cafe.app.question.controller.dto.QuestionResponse;
 import kr.codesqaud.cafe.app.question.controller.dto.QuestionSavedRequest;
 import kr.codesqaud.cafe.app.question.entity.Question;
@@ -35,6 +36,12 @@ public class QuestionService {
             .collect(Collectors.toUnmodifiableList());
     }
 
+    public List<QuestionResponse> getAllQuestionByPage(Pagination pagination) {
+        return repository.findAllByPage(pagination).stream()
+            .map(QuestionResponse::new)
+            .collect(Collectors.toUnmodifiableList());
+    }
+
     public QuestionResponse findQuestion(Long id) {
         Question findQuestion = repository.findById(id).orElseThrow(() -> {
             throw new ResourceNotFoundException(QuestionErrorCode.NOT_FOUND_QUESTION);
@@ -53,5 +60,9 @@ public class QuestionService {
     public QuestionResponse delete(Long id) {
         commentRepository.deleteAllByQuestionId(id);
         return new QuestionResponse(repository.deleteById(id));
+    }
+
+    public Long getTotalData() {
+        return repository.findQuestionCount();
     }
 }
