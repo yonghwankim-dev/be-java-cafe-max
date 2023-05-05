@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import kr.codesqaud.cafe.app.comment.entity.Comment;
+import kr.codesqaud.cafe.app.common.pagination.CommentCursor;
 import kr.codesqaud.cafe.app.question.entity.Question;
 import kr.codesqaud.cafe.app.user.entity.User;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -28,26 +29,38 @@ public class JdbcCommentRepository implements CommentRepository {
 
     @Override
     public List<Comment> findAll(Long questionId) {
-        StringBuilder sql = new StringBuilder();
-        sql
-            .append("SELECT c.ID id, c.CONTENT content, c.CREATETIME createTime, ")
-            .append("c.USERID uid, u.NAME name, c.QUESTIONID qid ")
-            .append("FROM comment c INNER JOIN question q ON c.QUESTIONID = q.ID ")
-            .append("INNER JOIN users u ON c.USERID = u.ID ")
-            .append("WHERE q.ID = ? and c.DELETED = false ")
-            .append("ORDER BY createTime");
-        return template.query(sql.toString(), commentRowMapper(), questionId);
+        return template.query(
+            "SELECT c.ID, c.CONTENT, c.CREATETIME, c.USERID, u.NAME, c.QUESTIONID "
+                + "FROM comment c "
+                + "INNER JOIN question q ON c.QUESTIONID = q.ID "
+                + "INNER JOIN users u ON c.USERID = u.ID "
+                + "WHERE q.ID = ? and c.DELETED = false "
+                + "ORDER BY createTime", commentRowMapper(), questionId);
+    }
+
+    @Override
+    public List<Comment> findAllByCursor(Long questionId, CommentCursor commentCursor) {
+        return template.query("SELECT rn, ID, CONTENT, CREATETIME, USERID, NAME, QUESTIONID "
+                + "FROM (SELECT ROWNUM rn, c.ID, c.CONTENT, c.CREATETIME, c.USERID, u.NAME, c.QUESTIONID "
+                + "      FROM comment c "
+                + "               INNER JOIN question q ON c.QUESTIONID = q.ID "
+                + "               INNER JOIN users u ON c.USERID = u.ID "
+                + "      WHERE q.ID = ? "
+                + "        AND c.DELETED = false "
+                + "        AND ROWNUM <= ?) as c "
+                + "WHERE rn > ?", commentRowMapper(), questionId, commentCursor.getEnd(),
+            commentCursor.getStart());
     }
 
     @Override
     public Optional<Comment> findById(Long id) {
-        StringBuilder sql = new StringBuilder();
-        sql.append("SELECT c.ID id, c.CONTENT content, c.CREATETIME createTime, ")
-            .append("c.USERID uid, u.NAME name, c.QUESTIONID qid ")
-            .append("FROM comment c INNER JOIN question q ON c.QUESTIONID = q.ID ")
-            .append("INNER JOIN users u ON c.USERID = u.ID ")
-            .append("WHERE c.ID = ? and c.DELETED = false");
-        List<Comment> result = template.query(sql.toString(), commentRowMapper(), id);
+        List<Comment> result = template.query(
+            "SELECT c.ID, c.CONTENT, c.CREATETIME, c.USERID, u.NAME, c.QUESTIONID "
+                + "FROM comment c "
+                + "INNER JOIN question q ON c.QUESTIONID = q.ID "
+                + "INNER JOIN users u ON c.USERID = u.ID "
+                + "WHERE c.ID = ? "
+                + "and c.DELETED = false", commentRowMapper(), id);
         return result.stream().findAny();
     }
 
@@ -79,6 +92,12 @@ public class JdbcCommentRepository implements CommentRepository {
         template.update("UPDATE comment SET deleted = true WHERE questionId = ?", questionId);
     }
 
+    @Override
+    public Long countByQuestionId(Long questionId) {
+        return template.queryForObject(
+            "SELECT COUNT(*) FROM comment WHERE questionId = ?", Long.class, questionId);
+    }
+
     private PreparedStatement getPreparedStatement(Comment comment, Connection con, String sql)
         throws SQLException {
         PreparedStatement pstmt = con.prepareStatement(sql, new String[]{"ID"});
@@ -95,12 +114,14 @@ public class JdbcCommentRepository implements CommentRepository {
                 .content(rs.getString("content"))
                 .createTime(rs.getTimestamp("createTime").toLocalDateTime())
                 .writer(User.builder()
-                    .id(rs.getLong("uid"))
+                    .id(rs.getLong("userid"))
                     .name(rs.getString("name"))
                     .build())
                 .question(Question.builder()
-                    .id(rs.getLong("qid"))
+                    .id(rs.getLong("questionId"))
                     .build())
                 .build();
     }
+
+
 }

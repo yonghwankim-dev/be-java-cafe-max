@@ -6,6 +6,7 @@ import kr.codesqaud.cafe.app.comment.controller.dto.CommentResponse;
 import kr.codesqaud.cafe.app.comment.controller.dto.CommentSavedRequest;
 import kr.codesqaud.cafe.app.comment.entity.Comment;
 import kr.codesqaud.cafe.app.comment.repository.CommentRepository;
+import kr.codesqaud.cafe.app.common.pagination.CommentCursor;
 import kr.codesqaud.cafe.errors.errorcode.CommentErrorCode;
 import kr.codesqaud.cafe.errors.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,13 @@ public class CommentService {
             .collect(Collectors.toUnmodifiableList());
     }
 
+    public List<CommentResponse> getCommentsByCursor(Long questionId, Long cursor) {
+        CommentCursor commentCursor = new CommentCursor(cursor);
+        return commentRepository.findAllByCursor(questionId, commentCursor).stream()
+            .map(CommentResponse::new)
+            .collect(Collectors.toUnmodifiableList());
+    }
+
     public CommentResponse getComment(Long id) {
         Comment findComment = commentRepository.findById(id).orElseThrow(() -> {
             throw new ResourceNotFoundException(CommentErrorCode.NOT_FOUND_COMMENT);
@@ -54,5 +62,9 @@ public class CommentService {
     public CommentResponse deleteComment(Long id) {
         Comment delComment = commentRepository.deleteById(id);
         return new CommentResponse(delComment);
+    }
+
+    public Long getTotalData(Long questionId) {
+        return commentRepository.countByQuestionId(questionId);
     }
 }

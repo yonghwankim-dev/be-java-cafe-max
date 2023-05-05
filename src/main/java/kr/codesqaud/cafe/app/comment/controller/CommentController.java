@@ -1,6 +1,8 @@
 package kr.codesqaud.cafe.app.comment.controller;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import kr.codesqaud.cafe.app.comment.controller.dto.CommentResponse;
@@ -12,6 +14,7 @@ import kr.codesqaud.cafe.errors.exception.PermissionDeniedException;
 import kr.codesqaud.cafe.errors.exception.RestApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
@@ -36,8 +40,20 @@ public class CommentController {
 
     // 댓글 전체 조회
     @GetMapping("/comments")
-    public List<CommentResponse> listComment(@PathVariable(value = "id") Long questionId) {
-        return commentService.getComments(questionId);
+    public ResponseEntity<Map<String, Object>> listComment(
+        @PathVariable(value = "id") Long questionId,
+        @RequestParam(value = "cursor", required = false, defaultValue = "0") Long cursor,
+        HttpSession session) {
+        UserResponse loginUser = (UserResponse) session.getAttribute("user");
+        Map<String, Object> commentMap = new ConcurrentHashMap<>();
+        List<CommentResponse> comments = commentService.getCommentsByCursor(questionId, cursor);
+        Long totalData = commentService.getTotalData(questionId);
+        Long movedCursor = cursor + comments.size();
+        commentMap.put("comments", comments);
+        commentMap.put("totalData", totalData);
+        commentMap.put("cursor", movedCursor);
+        commentMap.put("requestUserId", loginUser.getId());
+        return ResponseEntity.ok().body(commentMap);
     }
 
     // 댓글 추가

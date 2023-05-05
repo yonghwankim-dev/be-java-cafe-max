@@ -3,6 +3,7 @@ package kr.codesqaud.cafe.app.question.controller;
 import java.util.List;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
+import kr.codesqaud.cafe.app.comment.controller.dto.CommentResponse;
 import kr.codesqaud.cafe.app.comment.service.CommentService;
 import kr.codesqaud.cafe.app.common.pagination.Pagination;
 import kr.codesqaud.cafe.app.question.controller.dto.QuestionResponse;
@@ -69,11 +70,16 @@ public class QuestionController {
     // 특정 질문 조회
     @GetMapping("/qna/{id}")
     public ModelAndView detailQuestion(
-        @PathVariable(value = "id") Long id) {
+        @PathVariable(value = "id") Long id,
+        @RequestParam(value = "cursor", required = false, defaultValue = "0") Long cursor) {
+        log.info("cursor={}", cursor);
         ModelAndView mav = new ModelAndView("qna/detail");
-        Long cursor = 0L;
-        mav.addObject("question", questionService.findQuestion(id));
-        mav.addObject("comments", commentService.getCommentsByCursor(id, cursor));
+        QuestionResponse question = questionService.findQuestion(id);
+        List<CommentResponse> comments = commentService.getCommentsByCursor(id, cursor);
+        int movedCursor = comments.size();
+        mav.addObject("question", question);
+        mav.addObject("comments", comments);
+        mav.addObject("cursor", movedCursor);
         return mav;
     }
 
