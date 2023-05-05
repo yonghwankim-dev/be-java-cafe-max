@@ -6,20 +6,16 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import kr.codesqaud.cafe.CafeTestUtil;
+import kr.codesqaud.cafe.app.comment.controller.dto.CommentResponse;
 import kr.codesqaud.cafe.app.comment.controller.dto.CommentSavedRequest;
-import kr.codesqaud.cafe.app.comment.entity.Comment;
-import kr.codesqaud.cafe.app.comment.repository.CommentRepository;
-import kr.codesqaud.cafe.app.question.entity.Question;
-import kr.codesqaud.cafe.app.question.repository.QuestionRepository;
 import kr.codesqaud.cafe.app.user.controller.dto.UserResponse;
 import kr.codesqaud.cafe.app.user.entity.User;
-import kr.codesqaud.cafe.app.user.repository.UserRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,13 +40,7 @@ class CommentControllerTest {
     ObjectMapper objectMapper;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private QuestionRepository questionRepository;
-
-    @Autowired
-    private CommentRepository commentRepository;
+    private CafeTestUtil util;
 
     private MockHttpSession session;
 
@@ -64,42 +54,31 @@ class CommentControllerTest {
 
     @BeforeEach
     public void setup() {
-        // 회원가입 및 로그인
         session = new MockHttpSession();
-        User save = userRepository.save(
-            User.builder()
-                .userId("yonghwan1107")
-                .password("yonghwan1107")
-                .email("yonghwan1107@naver.com")
-                .name("김용환")
-                .build());
-        otherUser = userRepository.save(
-            User.builder()
-                .userId("kim1107")
-                .password("kim1107")
-                .email("kim1107@naver.com")
-                .name("김용환")
-                .build());
-        session.setAttribute("user", new UserResponse(save));
+        User loginUser = User.builder()
+            .userId("yonghwan1107")
+            .password("yonghwan1107")
+            .name("김용환")
+            .email("yonghwan1107@naver.com")
+            .build();
+        otherUser = User.builder()
+            .userId("kim1107")
+            .password("yonghwan1107")
+            .name("김용환")
+            .email("yonghwan1107@naver.com")
+            .build();
 
-        // 질문 게시글 작성
-        Question saveQuestion = questionRepository.save(
-            Question.builder()
-                .title("제목1")
-                .content("내용1")
-                .writer(save)
-                .build());
-
-        // 댓글 작성
-        Comment saveComment = commentRepository.save(
-            Comment.builder()
-                .content("댓글입니다.")
-                .question(saveQuestion)
-                .writer(save)
-                .build());
-        questionId = saveQuestion.getId();
-        userId = save.getId();
-        commentId = saveComment.getId();
+        // 회원생성
+        this.userId = util.signUp(loginUser);
+        util.signUp(otherUser);
+        // 로그인
+        util.login("yonghwan1107", "yonghwan1107", session);
+        // 게시글 생성
+        this.questionId = util.writeQuestion("제목1", "댓글1", "yonghwan1107");
+        // 댓글 생성
+        for (int i = 1; i <= 45; i++) {
+            this.commentId = util.writeComment(questionId, userId, "댓글" + i);
+        }
     }
 
     @Test
@@ -111,7 +90,7 @@ class CommentControllerTest {
 
         //when
         String json = mockMvc.perform(post(url)
-                .content(toJSON(dto))
+                .content(util.toJSON(dto))
                 .contentType(MediaType.APPLICATION_JSON)
                 .session(session))
             .andExpect(status().isOk())
@@ -132,7 +111,7 @@ class CommentControllerTest {
         String url = String.format("/qna/%d/comments", questionId);
         //when
         String json = mockMvc.perform(post(url)
-                .content(toJSON(dto))
+                .content(util.toJSON(dto))
                 .contentType(MediaType.APPLICATION_JSON)
                 .session(session))
             .andExpect(status().isBadRequest())
@@ -150,12 +129,12 @@ class CommentControllerTest {
     @DisplayName("3000글자가 넘는 댓글 내용 입력이 주어지고 댓글 작성 요청시 에러 응답하는지 테스트")
     public void createComment_fail2() throws Exception {
         //given
-        String content = "a" .repeat(3001);
+        String content = "a".repeat(3001);
         CommentSavedRequest dto = new CommentSavedRequest(content, questionId, userId);
         String url = String.format("/qna/%d/comments", questionId);
         //when
         String json = mockMvc.perform(post(url)
-                .content(toJSON(dto))
+                .content(util.toJSON(dto))
                 .contentType(MediaType.APPLICATION_JSON)
                 .session(session))
             .andExpect(status().isBadRequest())
@@ -180,12 +159,12 @@ class CommentControllerTest {
             .andExpect(status().isOk())
             .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
-        TypeReference<ArrayList<HashMap<String, Object>>> typeReference = new TypeReference<>() {
+        TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
-        ArrayList<HashMap<String, Object>> arrayList = objectMapper.readValue(json, typeReference);
-        HashMap<String, Object> commentMap = arrayList.get(0);
-        Assertions.assertThat(commentMap.get("content")).isEqualTo("댓글입니다.");
-        Assertions.assertThat(commentMap.get("writerName")).isEqualTo("김용환");
+        System.out.println("json " + json);
+        HashMap<String, Object> map = objectMapper.readValue(json, typeReference);
+        List<CommentResponse> comments = (List<CommentResponse>) map.get("comments");
+        Assertions.assertThat(comments.size()).isEqualTo(15);
     }
 
     @Test
@@ -196,7 +175,7 @@ class CommentControllerTest {
         CommentSavedRequest dto = new CommentSavedRequest("수정된 댓글1", questionId, userId);
         //when
         String json = mockMvc.perform(put(url)
-                .content(toJSON(dto))
+                .content(util.toJSON(dto))
                 .contentType(MediaType.APPLICATION_JSON)
                 .session(session))
             .andExpect(status().isOk())
@@ -216,7 +195,7 @@ class CommentControllerTest {
         CommentSavedRequest dto = new CommentSavedRequest("", questionId, userId);
         //when
         String json = mockMvc.perform(put(url)
-                .content(toJSON(dto))
+                .content(util.toJSON(dto))
                 .contentType(MediaType.APPLICATION_JSON)
                 .session(session))
             .andExpect(status().isBadRequest())
@@ -239,7 +218,7 @@ class CommentControllerTest {
         session.setAttribute("user", new UserResponse(otherUser));
         //when
         String json = mockMvc.perform(put(url)
-                .content(toJSON(dto))
+                .content(util.toJSON(dto))
                 .contentType(MediaType.APPLICATION_JSON)
                 .session(session))
             .andExpect(status().isForbidden())
@@ -290,7 +269,4 @@ class CommentControllerTest {
         Assertions.assertThat(commentMap.get("errorMessage")).isEqualTo("접근 권한이 없습니다.");
     }
 
-    private <T> String toJSON(T data) throws JsonProcessingException {
-        return new ObjectMapper().writeValueAsString(data);
-    }
 }
