@@ -98,6 +98,14 @@
                   </article>
                 </th:block>
               </div>
+              <div>
+                <form id="moreCommentForm" method="get"
+                      name="moreComment"
+                      th:action="@{/qna/{id}/comments(id=${question.id})}">
+                  <button class="btn btn-success" id="moreComment" th:data-cursor="${cursor}">더보기
+                  </button>
+                </form>
+              </div>
               <form class="submit-write" name="answer"
                     th:action="@{/qna/{questionId}/comments(questionId=${question.id})}">
                 <div class="form-group" style="padding:14px;">
@@ -143,6 +151,24 @@
             </form>
           </li>
         </ul>
+      </div>
+    </article>
+  </script>
+
+  <script id="answerTemplateWithoutUtil" type="text/template">
+    <article class="article">
+      <div class="article-header">
+        <div class="article-header-thumb">
+          <img src="https://graph.facebook.com/v2.3/1324855987/picture" class="article-author-thumb"
+               alt="">
+        </div>
+        <div class="article-header-text">
+          <a href="#" class="article-author-name">{0}</a> <!--작성자-->
+          <div class="article-header-time">{1}</div> <!--작성시간-->
+        </div>
+      </div>
+      <div class="article-doc comment-doc"> <!--댓글 내용-->
+        {2}
       </div>
     </article>
   </script>

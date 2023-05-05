@@ -22,6 +22,7 @@ $(document).ready(function () {
   $(".qna-comment-slipp-articles").on("click",
       ".delete-answer-form button[type=submit]", deleteAnswer);
 
+  $("#moreComment").on("click", showMoreComment);
 })
 
 function addAnswer(e) {
@@ -79,3 +80,50 @@ function deleteAnswer(e) {
   });
 }
 
+function showMoreComment(e) {
+  e.preventDefault()
+  const cursor = $("#moreComment").data("cursor");
+  const urlPath = $("#moreCommentForm").attr("action")
+
+  $.ajax({
+    type: 'get',
+    url: `${urlPath}?cursor=${cursor}`,
+    error: function (resp) {
+      alert(resp.responseJSON.errorMessage)
+    },
+    success: function (resp) {
+      console.log(resp)
+      const comments = resp.comments
+      const totalData = resp.totalData
+      const cursor = resp.cursor
+      const requestUserId = resp.requestUserId
+
+      comments.forEach((comment) => {
+        let template = null
+        if (comment.userId === requestUserId) {
+          const answerTemplate = $("#answerTemplate").html();
+          template = answerTemplate.format(
+              comment.writerName,
+              comment.createTime,
+              comment.content,
+              comment.questionId,
+              comment.id)
+        } else {
+          const answerTemplate = $("#answerTemplateWithoutUtil").html();
+          template = answerTemplate.format(
+              comment.writerName,
+              comment.createTime,
+              comment.content
+          )
+        }
+        $(".qna-comment-slipp-articles").append(template);
+      })
+
+      if (cursor >= totalData) {
+        $("#moreComment").hide()
+      } else {
+        $("#moreComment").data("cursor", cursor)
+      }
+    }
+  })
+}
