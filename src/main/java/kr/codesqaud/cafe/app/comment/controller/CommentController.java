@@ -1,5 +1,9 @@
 package kr.codesqaud.cafe.app.comment.controller;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
+@Api(tags = "댓글 API 정보를 제공하는 Controller")
 @RestController
 @RequestMapping("/qna/{id}")
 public class CommentController {
@@ -38,7 +43,12 @@ public class CommentController {
         this.commentService = commentService;
     }
 
-    // 댓글 전체 조회
+    @ApiOperation(value = "댓글 목록 조회")
+    @ApiImplicitParams(value = {
+        @ApiImplicitParam(name = "questionId", value = "게시글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "cursor", value = "댓글 커서", paramType = "query"),
+        @ApiImplicitParam(name = "session", value = "로그인 정보 세션", paramType = "query")
+    })
     @GetMapping("/comments")
     public ResponseEntity<Map<String, Object>> listComment(
         @PathVariable(value = "id") Long questionId,
@@ -56,7 +66,11 @@ public class CommentController {
         return ResponseEntity.ok().body(commentMap);
     }
 
-    // 댓글 추가
+    @ApiOperation(value = "댓글 추가")
+    @ApiImplicitParams(value = {
+        @ApiImplicitParam(name = "questionId", value = "게시글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "commentRequest", value = "댓글 추가 정보", paramType = "query")
+    })
     @PostMapping("/comments")
     public CommentResponse createComment(
         @PathVariable(value = "id") Long questionId,
@@ -67,7 +81,13 @@ public class CommentController {
     }
 
     // TOOD: 권한 인터셉터 필요
-    // 댓글 수정
+    @ApiOperation(value = "댓글 수정")
+    @ApiImplicitParams(value = {
+        @ApiImplicitParam(name = "questionId", value = "게시글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "commentId", value = "댓글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "commentRequest", value = "댓글 수정 정보", paramType = "query"),
+        @ApiImplicitParam(name = "session", value = "로그인 정보 세션", paramType = "query")
+    })
     @PutMapping("/comments/{commentId}")
     public CommentResponse modifyComment(@PathVariable(value = "id") Long questionId,
         @PathVariable(value = "commentId") Long commentId,
@@ -84,7 +104,12 @@ public class CommentController {
         return commentService.modifyComment(commentId, commentRequest);
     }
 
-    // 댓글 삭제
+    @ApiOperation(value = "댓글 삭제")
+    @ApiImplicitParams(value = {
+        @ApiImplicitParam(name = "questionId", value = "게시글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "commentId", value = "댓글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "session", value = "로그인 정보 세션", paramType = "query")
+    })
     @DeleteMapping("/comments/{commentId}")
     public CommentResponse deleteComment(@PathVariable(value = "id") Long questionId,
         @PathVariable(value = "commentId") Long commentId,
@@ -98,7 +123,12 @@ public class CommentController {
         return commentService.deleteComment(commentId);
     }
 
-    // 댓글 수정 페이지
+    @ApiOperation(value = "댓글 수정 페이지")
+    @ApiImplicitParams(value = {
+        @ApiImplicitParam(name = "questionId", value = "게시글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "commentId", value = "댓글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "session", value = "로그인 정보 세션", paramType = "query")
+    })
     @GetMapping("/comments/{commentId}/edit")
     public ModelAndView editCommentForm(@PathVariable(value = "id") Long questionId,
         @PathVariable(value = "commentId") Long commentId,

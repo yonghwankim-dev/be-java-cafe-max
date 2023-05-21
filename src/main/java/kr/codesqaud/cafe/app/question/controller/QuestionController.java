@@ -1,5 +1,9 @@
 package kr.codesqaud.cafe.app.question.controller;
 
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import java.util.List;
 import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
@@ -24,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.ModelAndView;
 
+@Api(tags = "질문 게시글 API 정보를 제공하는 Controller")
 @RestController
 public class QuestionController {
 
@@ -36,7 +41,8 @@ public class QuestionController {
         this.commentService = commentService;
     }
 
-    // 전체 질문 목록 조회
+    @ApiOperation(value = "질문 리스트 조회")
+    @ApiImplicitParam(name = "page", value = "페이지 번호")
     @GetMapping({"/", "/qna"})
     public ModelAndView listQuestion(
         @RequestParam(value = "page", required = false, defaultValue = "1") String page) {
@@ -61,13 +67,18 @@ public class QuestionController {
         }
     }
 
-    // 특정 질문 추가
+    @ApiOperation(value = "질문 추가")
+    @ApiImplicitParam(name = "questionRequest", value = "질문 추가 저장 정보")
     @PostMapping("/qna")
     public QuestionResponse addQuestion(@Valid @RequestBody QuestionSavedRequest questionRequest) {
         return questionService.writeQuestion(questionRequest);
     }
 
-    // 특정 질문 조회
+    @ApiOperation(value = "질문 조회")
+    @ApiImplicitParams(value = {
+        @ApiImplicitParam(name = "id", value = "게시글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "cursor", value = "댓글 커서", paramType = "query")
+    })
     @GetMapping("/qna/{id}")
     public ModelAndView detailQuestion(
         @PathVariable(value = "id") Long id,
@@ -84,7 +95,12 @@ public class QuestionController {
     }
 
     // TODO : 인증 인터셉터 추가
-    // 특정 질문 수정
+    @ApiOperation(value = "질문 수정")
+    @ApiImplicitParams(value = {
+        @ApiImplicitParam(name = "id", value = "수정 게시글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "questionRequest", value = "수정 게시글 정보", paramType = "query"),
+        @ApiImplicitParam(name = "session", value = "로그인 정보가 담긴 세션", paramType = "query")
+    })
     @PutMapping("/qna/{id}")
     public QuestionResponse modifyQuestion(
         @PathVariable(value = "id") Long id,
@@ -100,10 +116,13 @@ public class QuestionController {
     }
 
     // TODO : 인증 인터셉터 추가
-    // 특정 질문 삭제
+    @ApiOperation(value = "질문 삭제")
+    @ApiImplicitParams(value = {
+        @ApiImplicitParam(name = "id", value = "삭제 게시글 등록번호", paramType = "query"),
+        @ApiImplicitParam(name = "session", value = "로그인 정보가 담긴 세션", paramType = "query")
+    })
     @DeleteMapping("/qna/{id}")
-    public QuestionResponse deleteQuestion(@PathVariable(value = "id") Long id,
-        HttpSession session) {
+    public QuestionResponse deleteQuestion(@PathVariable(value = "id") Long id, HttpSession session) {
         log.info(id.toString());
         UserResponse loginUser = (UserResponse) session.getAttribute("user");
         QuestionResponse question = questionService.findQuestion(id);
@@ -114,13 +133,14 @@ public class QuestionController {
         return questionService.delete(id);
     }
 
-    // 질문 글쓰기 페이지
+    @ApiOperation(value = "질문 추가 페이지")
     @GetMapping("/qna/new")
     public ModelAndView addQuestionForm() {
         return new ModelAndView("qna/new");
     }
 
-    // 질문 수정 페이지
+    @ApiOperation(value = "질문 수정 페이지")
+    @ApiImplicitParam(name = "id", value = "수정 게시글 등록번호")
     @GetMapping("/qna/{id}/edit")
     public ModelAndView editQuestionForm(@PathVariable(value = "id") Long id) {
         ModelAndView mav = new ModelAndView("qna/edit");

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import kr.codesqaud.cafe.app.common.pagination.Pagination;
 import kr.codesqaud.cafe.app.question.entity.Question;
 import org.springframework.stereotype.Repository;
 
@@ -17,6 +18,16 @@ public class MemoryQuestionRepository implements QuestionRepository {
     @Override
     public List<Question> findAll() {
         return Collections.unmodifiableList(store);
+    }
+
+    @Override
+    public List<Question> findAllByPage(Pagination pagination) {
+        return null;
+    }
+
+    @Override
+    public Long findQuestionCount() {
+        return null;
     }
 
     @Override
