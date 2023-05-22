@@ -36,13 +36,22 @@
 
 ![img.png](docs/architecture.png)
 
+### 기술스택
+
+- Spring Boot
+- Thymeleaf
+- MySQL
+
 ## 4. 데모 영상
+
 [![img.png](img.png)](https://www.youtube.com/watch?v=cZ0-cmonoeY)
+
 ## 5. 문서 링크
 
 - [API 문서](https://yonghwans-organization.gitbook.io/cafe/reference/api-reference/users)
 
 ## 6. Docker
+
 
 ## 7. Wiki
 
