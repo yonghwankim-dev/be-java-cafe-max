@@ -44,7 +44,7 @@
 
 ## 5. 문서 링크
 
-- [API 문서](docs/api/index.html)
+- [API 문서](https://yonghwans-organization.gitbook.io/cafe/reference/api-reference/users)
 
 ## 6. Docker
 
