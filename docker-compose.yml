@@ -1,0 +1,50 @@
+version: "3" # 파일 규격 버전, 최신버전: 3.x.x
+
+# 이 항목 밑에 실행하려는 컨테이너 들을 정의
+services:
+  # 서비스 명
+  db:
+    # 사용할 이미지
+    image: mysql
+    # 컨테이너 이름 설정
+    container_name: be-java-cafe-max-mysql
+    # 접근 포트 설정 (컨테이너 외부:컨테이너 내부)
+    ports:
+      - "3306:3306"
+    restart: always
+    # -e 옵션
+    environment:
+      # MYSQL 패스워드 설정 DHQTUS
+      MYSQL_ROOT_PASSWORD: "root"
+      MYSQL_DATABASE: be_java_cafe_max
+      MYSQL_USER: yonghwan1107
+      MYSQL_PASSWORD: yonghwan1107@
+      LC_ALL: "C.UTF-8"
+    # 네트워크
+    networks:
+      - spring-cafe-network
+    # 명령어 실행 (인코딩 설정)
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      # -v 옵션 (디렉토리 마운트 설정)
+      - ~/BE03:/home
+    healthcheck:
+      test: [ "CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root --password=$$MYSQL_ROOT_PASSWORD" ]
+      interval: 10s
+      timeout: 2s
+      retries: 100
+  app:
+    build: .
+    restart: always
+    ports:
+      - 8081:8081
+    depends_on:
+      - db
+    container_name: app_test01
+    networks:
+      - spring-cafe-network
+
+networks:
+  spring-cafe-network:
