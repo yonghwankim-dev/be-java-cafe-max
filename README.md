@@ -52,6 +52,10 @@
 
 ## 6. Docker
 
+```bash
+be-java-cafe-max $ ./gradlew clean build
+be-java-cafe-max $ docker-compose up -d --build
+```
 
 ## 7. Wiki
 
