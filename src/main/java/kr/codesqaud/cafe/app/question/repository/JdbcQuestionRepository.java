@@ -48,11 +48,10 @@ public class JdbcQuestionRepository implements QuestionRepository {
             pagination.getStartNumber());
         return template.query(
             "SELECT rn, qqq.id, qqq.title, qqq.content, qqq.createtime, qqq.userid, qqq.name "
-                + "FROM (SELECT ROWNUM rn, qq.id, qq.title, qq.content, qq.createtime, qq.userid, qq.name "
-                + "FROM (SELECT q.id, title, content, createTime, q.userid, u.name FROM question q INNER JOIN users u ON q.USERID = u.ID WHERE deleted = false ORDER BY createTime DESC) qq "
-                + "WHERE ROWNUM <= ?) qqq "
-                + "WHERE rn >= ?"
-            , questionRowMapper(), pagination.getEndNumber(), pagination.getStartNumber());
+                + "FROM (SELECT ROW_NUMBER() over (order by qq.createTime desc) rn, qq.id, qq.title, qq.content, qq.createtime, qq.userid, qq.name "
+                + "FROM (SELECT q.id, title, content, createTime, q.userid, u.name FROM question q INNER JOIN users u ON q.USERID = u.ID WHERE deleted = false ORDER BY createTime DESC) qq) qqq "
+                + "WHERE rn between ? and ?"
+            , questionRowMapper(), pagination.getStartNumber(), pagination.getEndNumber());
     }
 
     @Override
