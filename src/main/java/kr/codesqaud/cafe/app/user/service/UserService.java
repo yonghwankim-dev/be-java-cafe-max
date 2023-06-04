@@ -1,7 +1,5 @@
 package kr.codesqaud.cafe.app.user.service;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import kr.codesqaud.cafe.app.user.controller.dto.UserLoginRequest;
 import kr.codesqaud.cafe.app.user.controller.dto.UserResponse;
 import kr.codesqaud.cafe.app.user.controller.dto.UserSavedRequest;
@@ -11,11 +9,18 @@ import kr.codesqaud.cafe.app.user.validator.UserValidator;
 import kr.codesqaud.cafe.errors.errorcode.UserErrorCode;
 import kr.codesqaud.cafe.errors.exception.ResourceNotFoundException;
 import kr.codesqaud.cafe.errors.exception.RestApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final UserValidator validator;
@@ -28,8 +33,8 @@ public class UserService {
     // 전체 회원 목록
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
-            .map(UserResponse::new)
-            .collect(Collectors.toUnmodifiableList());
+                .map(UserResponse::new)
+                .collect(Collectors.toUnmodifiableList());
     }
 
     // 회원가입
@@ -50,6 +55,8 @@ public class UserService {
 
     // 회원 이메일 중복 검증
     private void validateDuplicatedUserEmail(String email) {
+        logger.debug("userRepository : {}", userRepository);
+        logger.debug("count : {}", userRepository.findAll().size());
         userRepository.findByEmail(email).ifPresent((user) -> {
             throw new RestApiException(UserErrorCode.ALREADY_EXIST_EMAIL);
         });
@@ -90,7 +97,7 @@ public class UserService {
             validateDuplicatedUserEmail(userRequest.getEmail());
         }
         validator.validateEqualConfirmPassword(userRequest.getPassword(),
-            originalUser.getPassword());
+                originalUser.getPassword());
         originalUser.modify(userRequest.toEntity());
         return new UserResponse(userRepository.modify(originalUser));
     }

@@ -1,9 +1,10 @@
 package kr.codesqaud.cafe.app.comment.repository;
 
-import java.util.List;
-import java.util.Optional;
 import kr.codesqaud.cafe.app.comment.entity.Comment;
 import kr.codesqaud.cafe.app.common.pagination.CommentCursor;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface CommentRepository {
 
@@ -20,6 +21,8 @@ public interface CommentRepository {
     Comment deleteById(Long id);
 
     void deleteAllByQuestionId(Long questionId);
+
+    int deleteAll();
 
     Long countByQuestionId(Long questionId);
 }

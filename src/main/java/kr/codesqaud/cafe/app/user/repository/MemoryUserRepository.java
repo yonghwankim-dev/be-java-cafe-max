@@ -1,16 +1,19 @@
 package kr.codesqaud.cafe.app.user.repository;
 
+import kr.codesqaud.cafe.app.user.entity.User;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Repository;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import kr.codesqaud.cafe.app.user.entity.User;
-import org.springframework.stereotype.Repository;
 
+@Profile("memory")
 @Repository
 public class MemoryUserRepository implements UserRepository {
 
-    private final List<User> store = new ArrayList<>();
+    private static final List<User> store = new ArrayList<>();
     private static long sequence = 0;
 
     @Override
@@ -36,12 +39,12 @@ public class MemoryUserRepository implements UserRepository {
     @Override
     public User save(User user) {
         User newUser = User.builder()
-            .id(nextId())
-            .userId(user.getUserId())
-            .password(user.getPassword())
-            .name(user.getName())
-            .email(user.getEmail())
-            .build();
+                .id(nextId())
+                .userId(user.getUserId())
+                .password(user.getPassword())
+                .name(user.getName())
+                .email(user.getEmail())
+                .build();
         store.add(newUser);
         return newUser;
     }

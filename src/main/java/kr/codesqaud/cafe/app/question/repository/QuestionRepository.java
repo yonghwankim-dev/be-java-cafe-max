@@ -1,9 +1,10 @@
 package kr.codesqaud.cafe.app.question.repository;
 
-import java.util.List;
-import java.util.Optional;
 import kr.codesqaud.cafe.app.common.pagination.Pagination;
 import kr.codesqaud.cafe.app.question.entity.Question;
+
+import java.util.List;
+import java.util.Optional;
 
 public interface QuestionRepository {
 
@@ -20,4 +21,6 @@ public interface QuestionRepository {
     Question deleteById(Long id);
 
     Long findQuestionCount();
+
+    int deleteAll();
 }

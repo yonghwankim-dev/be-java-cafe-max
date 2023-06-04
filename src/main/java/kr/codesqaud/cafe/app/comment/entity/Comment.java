@@ -1,8 +1,9 @@
 package kr.codesqaud.cafe.app.comment.entity;
 
-import java.time.LocalDateTime;
 import kr.codesqaud.cafe.app.question.entity.Question;
 import kr.codesqaud.cafe.app.user.entity.User;
+
+import java.time.LocalDateTime;
 
 public class Comment {
 
@@ -10,7 +11,7 @@ public class Comment {
     private String content;
     private final LocalDateTime createTime;
     private final LocalDateTime modifyTime;
-    private final Boolean deleted;
+    private Boolean deleted;
     private final Question question;
     private final User writer;
 
@@ -59,6 +60,10 @@ public class Comment {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public void delete() {
+        this.deleted = true;
     }
 
 

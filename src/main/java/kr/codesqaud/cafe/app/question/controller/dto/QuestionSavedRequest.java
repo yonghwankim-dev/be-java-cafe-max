@@ -1,10 +1,11 @@
 package kr.codesqaud.cafe.app.question.controller.dto;
 
-import javax.validation.constraints.Pattern;
 import kr.codesqaud.cafe.app.question.entity.Question;
 import kr.codesqaud.cafe.app.user.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.validation.constraints.Pattern;
 
 public class QuestionSavedRequest {
 
@@ -26,10 +27,11 @@ public class QuestionSavedRequest {
 
     public Question toEntity() {
         return Question.builder()
-            .title(title)
-            .content(content)
-            .writer(User.builder().id(userId).build())
-            .build();
+                .title(title)
+                .content(content)
+                .writer(User.builder().id(userId).build())
+                .deleted(false)
+                .build();
     }
 
     public String getTitle() {
@@ -47,9 +49,9 @@ public class QuestionSavedRequest {
     @Override
     public String toString() {
         return "QuestionSavedRequest{" +
-            "title='" + title + '\'' +
-            ", content='" + content + '\'' +
-            ", writer='" + userId + '\'' +
-            '}';
+                "title='" + title + '\'' +
+                ", content='" + content + '\'' +
+                ", userId=" + userId +
+                '}';
     }
 }
