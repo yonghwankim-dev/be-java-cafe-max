@@ -44,7 +44,7 @@
 
 ## 4. 데모 영상
 
-[![img.png](img.png)](https://www.youtube.com/watch?v=cZ0-cmonoeY)
+[![img.png](docs/img.png)](https://www.youtube.com/watch?v=cZ0-cmonoeY)
 
 ## 5. 문서 링크
 
