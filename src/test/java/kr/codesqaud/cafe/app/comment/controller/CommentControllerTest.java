@@ -1,22 +1,17 @@
 package kr.codesqaud.cafe.app.comment.controller;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.List;
 import kr.codesqaud.cafe.CafeTestUtil;
 import kr.codesqaud.cafe.app.comment.controller.dto.CommentResponse;
 import kr.codesqaud.cafe.app.comment.controller.dto.CommentSavedRequest;
+import kr.codesqaud.cafe.app.comment.repository.CommentRepository;
+import kr.codesqaud.cafe.app.question.repository.QuestionRepository;
 import kr.codesqaud.cafe.app.user.controller.dto.UserResponse;
 import kr.codesqaud.cafe.app.user.entity.User;
+import kr.codesqaud.cafe.app.user.repository.UserRepository;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +23,13 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @AutoConfigureMockMvc
 @Transactional
 @SpringBootTest
@@ -38,6 +40,15 @@ class CommentControllerTest {
 
     @Autowired
     ObjectMapper objectMapper;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private QuestionRepository questionRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
 
     @Autowired
     private CafeTestUtil util;
@@ -56,17 +67,17 @@ class CommentControllerTest {
     public void setup() {
         session = new MockHttpSession();
         User loginUser = User.builder()
-            .userId("yonghwan1107")
-            .password("yonghwan1107")
-            .name("김용환")
-            .email("yonghwan1107@naver.com")
-            .build();
+                .userId("yonghwan1107")
+                .password("yonghwan1107")
+                .name("김용환")
+                .email("yonghwan1107@naver.com")
+                .build();
         otherUser = User.builder()
-            .userId("kim1107")
-            .password("yonghwan1107")
-            .name("김용환")
-            .email("yonghwan1107@naver.com")
-            .build();
+                .userId("kim1107")
+                .password("yonghwan1107")
+                .name("김용환")
+                .email("yonghwan1107@naver.com")
+                .build();
 
         // 회원생성
         this.userId = util.signUp(loginUser);
@@ -81,6 +92,14 @@ class CommentControllerTest {
         }
     }
 
+    @AfterEach
+    public void clean() {
+        session.invalidate();
+        userRepository.deleteAll();
+        questionRepository.deleteAll();
+        commentRepository.deleteAll();
+    }
+
     @Test
     @DisplayName("댓글 내용이 주어졌을때 댓글 작성 요청시 댓글이 달아지고 해당 질문 게시글로 이동되는지 테스트")
     public void createComment_success() throws Exception {
@@ -90,11 +109,11 @@ class CommentControllerTest {
 
         //when
         String json = mockMvc.perform(post(url)
-                .content(util.toJSON(dto))
-                .contentType(MediaType.APPLICATION_JSON)
-                .session(session))
-            .andExpect(status().isOk())
-            .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                        .content(util.toJSON(dto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -111,11 +130,11 @@ class CommentControllerTest {
         String url = String.format("/qna/%d/comments", questionId);
         //when
         String json = mockMvc.perform(post(url)
-                .content(util.toJSON(dto))
-                .contentType(MediaType.APPLICATION_JSON)
-                .session(session))
-            .andExpect(status().isBadRequest())
-            .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                        .content(util.toJSON(dto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .session(session))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -134,11 +153,11 @@ class CommentControllerTest {
         String url = String.format("/qna/%d/comments", questionId);
         //when
         String json = mockMvc.perform(post(url)
-                .content(util.toJSON(dto))
-                .contentType(MediaType.APPLICATION_JSON)
-                .session(session))
-            .andExpect(status().isBadRequest())
-            .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                        .content(util.toJSON(dto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .session(session))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -155,9 +174,9 @@ class CommentControllerTest {
         String url = String.format("/qna/%d/comments", questionId);
         //when
         String json = mockMvc.perform(get(url)
-                .session(session))
-            .andExpect(status().isOk())
-            .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                        .session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -175,11 +194,11 @@ class CommentControllerTest {
         CommentSavedRequest dto = new CommentSavedRequest("수정된 댓글1", questionId, userId);
         //when
         String json = mockMvc.perform(put(url)
-                .content(util.toJSON(dto))
-                .contentType(MediaType.APPLICATION_JSON)
-                .session(session))
-            .andExpect(status().isOk())
-            .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                        .content(util.toJSON(dto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -195,11 +214,11 @@ class CommentControllerTest {
         CommentSavedRequest dto = new CommentSavedRequest("", questionId, userId);
         //when
         String json = mockMvc.perform(put(url)
-                .content(util.toJSON(dto))
-                .contentType(MediaType.APPLICATION_JSON)
-                .session(session))
-            .andExpect(status().isBadRequest())
-            .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                        .content(util.toJSON(dto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .session(session))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -218,11 +237,11 @@ class CommentControllerTest {
         session.setAttribute("user", new UserResponse(otherUser));
         //when
         String json = mockMvc.perform(put(url)
-                .content(util.toJSON(dto))
-                .contentType(MediaType.APPLICATION_JSON)
-                .session(session))
-            .andExpect(status().isForbidden())
-            .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                        .content(util.toJSON(dto))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .session(session))
+                .andExpect(status().isForbidden())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -239,9 +258,9 @@ class CommentControllerTest {
         String url = String.format("/qna/%d/comments/%d", questionId, commentId);
         //when
         String json = mockMvc.perform(delete(url)
-                .session(session))
-            .andExpect(status().isOk())
-            .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                        .session(session))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -257,9 +276,9 @@ class CommentControllerTest {
         session.setAttribute("user", new UserResponse(otherUser));
         //when
         String json = mockMvc.perform(delete(url)
-                .session(session))
-            .andExpect(status().isForbidden())
-            .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+                        .session(session))
+                .andExpect(status().isForbidden())
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };

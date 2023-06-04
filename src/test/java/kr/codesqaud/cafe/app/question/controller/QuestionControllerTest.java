@@ -1,25 +1,10 @@
 package kr.codesqaud.cafe.app.question.controller;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
 import kr.codesqaud.cafe.app.comment.controller.dto.CommentResponse;
 import kr.codesqaud.cafe.app.comment.controller.dto.CommentSavedRequest;
 import kr.codesqaud.cafe.app.comment.repository.CommentRepository;
@@ -33,9 +18,11 @@ import kr.codesqaud.cafe.app.question.service.QuestionService;
 import kr.codesqaud.cafe.app.user.controller.dto.UserLoginRequest;
 import kr.codesqaud.cafe.app.user.controller.dto.UserSavedRequest;
 import kr.codesqaud.cafe.app.user.entity.User;
+import kr.codesqaud.cafe.app.user.repository.UserRepository;
 import kr.codesqaud.cafe.app.user.service.UserService;
 import kr.codesqaud.cafe.errors.response.ErrorResponse.ValidationError;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,6 +36,13 @@ import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.ModelMap;
+
+import java.nio.charset.StandardCharsets;
+import java.util.*;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @Transactional
 @AutoConfigureMockMvc
@@ -74,6 +68,9 @@ class QuestionControllerTest {
     private UserService userService;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private MockHttpSession httpSession;
@@ -84,13 +81,31 @@ class QuestionControllerTest {
 
     @BeforeEach
     public void setup() {
+        clean();
         objectMapper.registerModule(new JavaTimeModule());
         httpSession = new MockHttpSession();
         userId = signUp("yonghwan1107", "yonghwan1107", "김용환", "yonghwan1107@gmail.com");
-        questionId = writeQuestion("제목1", "내용1", "yonghwan1107");
-        for (int i = 1; i <= 45; i++) {
-            writeComment(questionId, userId, "댓글" + i);
+
+        for (int i = 1; i <= 100; i++) {
+            questionId = writeQuestion("제목" + i, "내용 " + i, "yonghwan1107");
+            for (int j = 1; j <= 45; j++) {
+                writeComment(this.questionId, userId, "댓글" + j);
+            }
         }
+    }
+
+    @AfterEach
+    public void afterEach() {
+        clean();
+    }
+
+    private void clean() {
+        if (httpSession != null) {
+            httpSession.invalidate();
+        }
+        userRepository.deleteAll();
+        questionRepository.deleteAll();
+        commentRepository.deleteAll();
     }
 
     public Long writeQuestion(String title, String content, String userId) {
@@ -117,9 +132,9 @@ class QuestionControllerTest {
         String url = "/qna";
         //when
         String jsonArticle = mockMvc.perform(
-                post(url).contentType(MediaType.APPLICATION_JSON).content(toJSON(dto))
-                    .session(httpSession)).andExpect(status().isOk()).andReturn().getResponse()
-            .getContentAsString(StandardCharsets.UTF_8);
+                        post(url).contentType(MediaType.APPLICATION_JSON).content(toJSON(dto))
+                                .session(httpSession)).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -141,9 +156,9 @@ class QuestionControllerTest {
         String url = "/qna";
         //when
         String jsonErrors = mockMvc.perform(
-                post(url).contentType(MediaType.APPLICATION_JSON).content(toJSON(dto))
-                    .session(httpSession)).andExpect(status().isBadRequest()).andReturn().getResponse()
-            .getContentAsString(StandardCharsets.UTF_8);
+                        post(url).contentType(MediaType.APPLICATION_JSON).content(toJSON(dto))
+                                .session(httpSession)).andExpect(status().isBadRequest()).andReturn().getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
         //then
         List<ValidationError> errors = new ArrayList<>();
         errors.add(new ValidationError("title", "제목은 100자 이내여야 합니다."));
@@ -163,7 +178,7 @@ class QuestionControllerTest {
         String url = "/qna/new";
         //when & then
         mockMvc.perform(get(url)).andExpect(status().is3xxRedirection())
-            .andExpect(redirectedUrl("/login"));
+                .andExpect(redirectedUrl("/login"));
     }
 
     @Test
@@ -174,13 +189,13 @@ class QuestionControllerTest {
         String url = "/qna/" + questionId;
         //when
         ModelMap modelMap = Objects.requireNonNull(
-            mockMvc.perform(get(url).session(httpSession)).andExpect(status().isOk()).andReturn()
-                .getModelAndView()).getModelMap();
+                mockMvc.perform(get(url).session(httpSession)).andExpect(status().isOk()).andReturn()
+                        .getModelAndView()).getModelMap();
         //then
         QuestionResponse question = (QuestionResponse) modelMap.get("question");
         List<CommentResponse> comments = (List<CommentResponse>) modelMap.get("comments");
-        assertThat(question.getTitle()).isEqualTo("제목1");
-        assertThat(question.getContent()).isEqualTo("내용1");
+        assertThat(question.getTitle()).isEqualTo("제목100");
+        assertThat(question.getContent()).isEqualTo("내용 100");
         assertThat(question.getWriter()).isEqualTo("김용환");
         assertThat(comments.size()).isEqualTo(15);
     }
@@ -203,13 +218,13 @@ class QuestionControllerTest {
         String modifiedTitle = "변경된 제목1";
         String modifiedContent = "변경된 내용1";
         QuestionSavedRequest dto = new QuestionSavedRequest(modifiedTitle, modifiedContent,
-            user.getId());
+                user.getId());
         String url = "/qna/" + questionId;
         //when
         String json = mockMvc.perform(
-                put(url).content(toJSON(dto)).contentType(MediaType.APPLICATION_JSON)
-                    .session(httpSession)).andExpect(status().isOk()).andReturn().getResponse()
-            .getContentAsString(StandardCharsets.UTF_8);
+                        put(url).content(toJSON(dto)).contentType(MediaType.APPLICATION_JSON)
+                                .session(httpSession)).andExpect(status().isOk()).andReturn().getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -225,13 +240,13 @@ class QuestionControllerTest {
         login("yonghwan1107", "yonghwan1107");
         Question question = write("제목1", "내용1");
         QuestionSavedRequest dto = new QuestionSavedRequest("", "변경된 내용1",
-            question.getWriter().getId());
+                question.getWriter().getId());
         String url = "/qna/" + question.getId();
         //when
         String json = mockMvc.perform(
-                put(url).content(toJSON(dto)).contentType(MediaType.APPLICATION_JSON)
-                    .session(httpSession)).andExpect(status().isBadRequest()).andReturn().getResponse()
-            .getContentAsString(StandardCharsets.UTF_8);
+                        put(url).content(toJSON(dto)).contentType(MediaType.APPLICATION_JSON)
+                                .session(httpSession)).andExpect(status().isBadRequest()).andReturn().getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
         //then
         TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
         };
@@ -249,21 +264,23 @@ class QuestionControllerTest {
         Question question = write("제목1", "내용1");
         String url = "/qna/" + question.getId();
         //when & then
-        mockMvc.perform(delete(url).session(httpSession)).andExpect(status().isOk());
+        mockMvc.perform(delete(url)
+                        .session(httpSession))
+                .andExpect(status().isOk());
     }
 
 
     @Test
     @DisplayName("삭제할 질문게시글 등록번호가 주어지고 삭제 요청시 게시글과 댓글들이 deleted 상태가 되는지 테스트")
     public void givenQuestionId_whenDeleteQuestion_thenModifyQuestionAndCommentsToDeletedStatus()
-        throws Exception {
+            throws Exception {
         //given
         login("yonghwan1107", "yonghwan1107");
         String url = "/qna/" + questionId;
         //when
         mockMvc.perform(delete(url)
-                .session(httpSession))
-            .andExpect(status().isOk());
+                        .session(httpSession))
+                .andExpect(status().isOk());
         //then
         boolean emptyQuestion = questionRepository.findById(questionId).isEmpty();
         boolean emptyComments = commentRepository.findAll(questionId).isEmpty();
@@ -293,7 +310,7 @@ class QuestionControllerTest {
         String url = "/qna/" + id;
         //when & then
         mockMvc.perform(get(url).session(httpSession)).andExpect(status().isNotFound())
-            .andExpect(view().name("error/404"));
+                .andExpect(view().name("error/404"));
     }
 
     @Test
@@ -303,9 +320,9 @@ class QuestionControllerTest {
         String page = "2";
         //when
         Object result = Objects.requireNonNull(mockMvc.perform(get("/")
-                .param("page", page))
-            .andExpect(status().isOk())
-            .andReturn().getModelAndView().getModelMap().get("questions"));
+                        .param("page", page))
+                .andExpect(status().isOk())
+                .andReturn().getModelAndView().getModelMap().get("questions"));
         List<QuestionResponse> questions = (List<QuestionResponse>) result;
         //then
         Assertions.assertThat(questions.size()).isEqualTo(15);
@@ -314,18 +331,18 @@ class QuestionControllerTest {
     @Test
     @DisplayName("최대 페이지보다 큰 페이지번호가 주어지고 질문 게시글 목록 요청시 최대 페이지로 이동하는지 테스트")
     public void pagination_givenPageNumberLargerThanTheMaximumPage_whenListQuestion_thenMoveMaximumPage()
-        throws Exception {
+            throws Exception {
         //given
         String page = "99999";
         //when
         Map<String, Object> modelMap = mockMvc.perform(get("/")
-                .param("page", page))
-            .andExpect(status().isOk())
-            .andReturn().getModelAndView().getModelMap();
+                        .param("page", page))
+                .andExpect(status().isOk())
+                .andReturn().getModelAndView().getModelMap();
         List<QuestionResponse> questions = (List<QuestionResponse>) modelMap.get("questions");
         Pagination pagination = (Pagination) modelMap.get("pagination");
         //then
-        Assertions.assertThat(questions.size()).isEqualTo(11);
+        Assertions.assertThat(questions.size()).isEqualTo(10);
         Assertions.assertThat(pagination.getCurrentPage()).isEqualTo(7);
     }
 
@@ -333,15 +350,15 @@ class QuestionControllerTest {
     @DisplayName("1페이지보다 작은수가 주어질때 질문 게시글 목록 요청시 첫번째 페이지로 이동하는지 테스트")
     @ValueSource(strings = {"0", "-1", "aweofijawoeifj"})
     public void pagination_givenPageNumberLessThanThe1Page_whenListQuestion_thenMove1Page(
-        String page)
-        throws Exception {
+            String page)
+            throws Exception {
         //given
 
         //when
         Map<String, Object> modelMap = mockMvc.perform(get("/")
-                .param("page", page))
-            .andExpect(status().isOk())
-            .andReturn().getModelAndView().getModelMap();
+                        .param("page", page))
+                .andExpect(status().isOk())
+                .andReturn().getModelAndView().getModelMap();
         List<QuestionResponse> questions = (List<QuestionResponse>) modelMap.get("questions");
         Pagination pagination = (Pagination) modelMap.get("pagination");
         //then
@@ -355,17 +372,21 @@ class QuestionControllerTest {
 
     private void login(String userId, String password) throws Exception {
         mockMvc.perform(post("/login").content(toJSON(new UserLoginRequest(userId, password)))
-            .contentType(MediaType.APPLICATION_JSON).session(httpSession));
+                .contentType(MediaType.APPLICATION_JSON).session(httpSession));
     }
 
     private Question write(String title, String content) {
-        Question question = Question.builder().title(title).content(content)
-            .writer(User.builder().id(userId).build()).build();
+        Question question = Question.builder()
+                .title(title)
+                .content(content)
+                .deleted(false)
+                .writer(User.builder().id(userId).build())
+                .build();
         return questionRepository.save(question);
     }
 
     private <T> String toJSON(T data) throws JsonProcessingException {
         return new ObjectMapper().registerModule(new JavaTimeModule())
-            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS).writeValueAsString(data);
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS).writeValueAsString(data);
     }
 }
