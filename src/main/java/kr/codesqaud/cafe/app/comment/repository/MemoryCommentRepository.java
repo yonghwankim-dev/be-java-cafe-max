@@ -2,6 +2,7 @@ package kr.codesqaud.cafe.app.comment.repository;
 
 import kr.codesqaud.cafe.app.comment.entity.Comment;
 import kr.codesqaud.cafe.app.common.pagination.CommentCursor;
+import kr.codesqaud.cafe.app.user.repository.UserRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
@@ -17,6 +18,12 @@ public class MemoryCommentRepository implements CommentRepository {
 
     private static final List<Comment> store = new ArrayList<>();
     private static long sequence = 0;
+
+    private final UserRepository userRepository;
+
+    public MemoryCommentRepository(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     @Override
     public List<Comment> findAll(Long questionId) {
@@ -53,7 +60,7 @@ public class MemoryCommentRepository implements CommentRepository {
                 .modifyTime(null)
                 .deleted(false)
                 .question(comment.getQuestion())
-                .writer(comment.getWriter())
+                .writer(userRepository.findById(comment.getWriter().getId()).orElseThrow())
                 .build();
         store.add(newComment);
         return newComment;

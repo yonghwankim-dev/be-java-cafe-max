@@ -1,5 +1,6 @@
 package kr.codesqaud.cafe.app.question.repository;
 
+import kr.codesqaud.cafe.app.comment.repository.CommentRepository;
 import kr.codesqaud.cafe.app.common.pagination.Pagination;
 import kr.codesqaud.cafe.app.question.entity.Question;
 import kr.codesqaud.cafe.app.user.repository.UserRepository;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Profile("memory")
@@ -18,9 +20,11 @@ public class MemoryQuestionRepository implements QuestionRepository {
     private static long sequence = 0;
 
     private final UserRepository userRepository;
+    private final CommentRepository commentRepository;
 
-    public MemoryQuestionRepository(UserRepository userRepository) {
+    public MemoryQuestionRepository(UserRepository userRepository, CommentRepository commentRepository) {
         this.userRepository = userRepository;
+        this.commentRepository = commentRepository;
     }
 
     @Override
@@ -35,9 +39,22 @@ public class MemoryQuestionRepository implements QuestionRepository {
         return store.stream()
                 .filter(question -> !question.getDeleted())
                 .sorted(Comparator.comparing(Question::getCreateTime).reversed())
+                .map(getQuestionListMapper())
                 .skip(pagination.getStartNumber() - 1)
                 .limit(pagination.getEndNumber() - pagination.getStartNumber() + 1)
                 .collect(Collectors.toUnmodifiableList());
+    }
+
+    private Function<Question, Question> getQuestionListMapper() {
+        return question -> Question.builder()
+                .id(question.getId())
+                .title(question.getTitle())
+                .createTime(question.getCreateTime())
+                .modifyTime(question.getModifyTime())
+                .deleted(question.getDeleted())
+                .writer(question.getWriter())
+                .commentCount(commentRepository.findAll(question.getId()).size())
+                .build();
     }
 
     @Override

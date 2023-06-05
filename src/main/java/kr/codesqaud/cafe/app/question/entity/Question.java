@@ -1,21 +1,23 @@
 package kr.codesqaud.cafe.app.question.entity;
 
+import kr.codesqaud.cafe.app.user.entity.User;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
-import kr.codesqaud.cafe.app.user.entity.User;
 
 public class Question {
 
-    private final Long id; // 게시글 등록번호
-    private String title; // 제목
-    private String content; // 내용
+    private final Long id;                  // 게시글 등록번호
+    private String title;                   // 제목
+    private String content;                 // 내용
     private final LocalDateTime createTime; // 작성시간
     private final LocalDateTime modifyTime; // 갱신시간
-    private Boolean deleted;
-    private final User writer; // 회원 등록번호
+    private Boolean deleted;                // 삭제여부
+    private final User writer;              // 회원 등록번호
+    private final int commentCount;         // 댓글 개수
 
     private Question(Long id, String title, String content, LocalDateTime createTime,
-        LocalDateTime modifyTime, Boolean deleted, User writer) {
+                     LocalDateTime modifyTime, Boolean deleted, User writer, int commentCount) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -23,6 +25,7 @@ public class Question {
         this.modifyTime = modifyTime;
         this.deleted = deleted;
         this.writer = writer;
+        this.commentCount = commentCount;
     }
 
     public void modify(Question question) {
@@ -62,6 +65,10 @@ public class Question {
         return writer;
     }
 
+    public int getCommentCount() {
+        return commentCount;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -76,6 +83,7 @@ public class Question {
         private LocalDateTime modifyTime;
         private Boolean deleted;
         private User writer;
+        private int commentCount;
 
         public Builder id(Long id) {
             this.id = id;
@@ -112,8 +120,13 @@ public class Question {
             return this;
         }
 
+        public Builder commentCount(int commentCount) {
+            this.commentCount = commentCount;
+            return this;
+        }
+
         public Question build() {
-            return new Question(id, title, content, createTime, modifyTime, deleted, writer);
+            return new Question(id, title, content, createTime, modifyTime, deleted, writer, commentCount);
         }
     }
 
@@ -137,13 +150,14 @@ public class Question {
     @Override
     public String toString() {
         return "Question{" +
-            "id=" + id +
-            ", title='" + title + '\'' +
-            ", content='" + content + '\'' +
-            ", createTime=" + createTime +
-            ", modifyTime=" + modifyTime +
-            ", deleted=" + deleted +
-            ", writer=" + writer +
-            '}';
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", content='" + content + '\'' +
+                ", createTime=" + createTime +
+                ", modifyTime=" + modifyTime +
+                ", deleted=" + deleted +
+                ", writer=" + writer +
+                ", commentCount=" + commentCount +
+                '}';
     }
 }
