@@ -14,10 +14,9 @@ public class Question {
     private final LocalDateTime modifyTime; // 갱신시간
     private Boolean deleted;                // 삭제여부
     private final User writer;              // 회원 등록번호
-    private final int commentCount;         // 댓글 개수
 
     private Question(Long id, String title, String content, LocalDateTime createTime,
-                     LocalDateTime modifyTime, Boolean deleted, User writer, int commentCount) {
+        LocalDateTime modifyTime, Boolean deleted, User writer) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -25,7 +24,6 @@ public class Question {
         this.modifyTime = modifyTime;
         this.deleted = deleted;
         this.writer = writer;
-        this.commentCount = commentCount;
     }
 
     public void modify(Question question) {
@@ -65,10 +63,6 @@ public class Question {
         return writer;
     }
 
-    public int getCommentCount() {
-        return commentCount;
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -83,7 +77,6 @@ public class Question {
         private LocalDateTime modifyTime;
         private Boolean deleted;
         private User writer;
-        private int commentCount;
 
         public Builder id(Long id) {
             this.id = id;
@@ -120,13 +113,8 @@ public class Question {
             return this;
         }
 
-        public Builder commentCount(int commentCount) {
-            this.commentCount = commentCount;
-            return this;
-        }
-
         public Question build() {
-            return new Question(id, title, content, createTime, modifyTime, deleted, writer, commentCount);
+            return new Question(id, title, content, createTime, modifyTime, deleted, writer);
         }
     }
 
@@ -150,14 +138,13 @@ public class Question {
     @Override
     public String toString() {
         return "Question{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", content='" + content + '\'' +
-                ", createTime=" + createTime +
-                ", modifyTime=" + modifyTime +
-                ", deleted=" + deleted +
-                ", writer=" + writer +
-                ", commentCount=" + commentCount +
-                '}';
+            "id=" + id +
+            ", title='" + title + '\'' +
+            ", content='" + content + '\'' +
+            ", createTime=" + createTime +
+            ", modifyTime=" + modifyTime +
+            ", deleted=" + deleted +
+            ", writer=" + writer +
+            '}';
     }
 }

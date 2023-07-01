@@ -46,11 +46,24 @@ public class JdbcQuestionRepository implements QuestionRepository {
         log.info("pagination endNumber : {}, startNumber : {}", pagination.getEndNumber(),
                 pagination.getStartNumber());
         return template.query(
-                "SELECT rn, qqq.id, qqq.title, qqq.content, qqq.createtime, qqq.userid, qqq.name "
-                        + "FROM (SELECT ROW_NUMBER() over (order by qq.createTime desc) rn, qq.id, qq.title, qq.content, qq.createtime, qq.userid, qq.name "
-                        + "FROM (SELECT q.id, title, content, createTime, q.userid, u.name FROM question q INNER JOIN users u ON q.USERID = u.ID WHERE deleted = false ORDER BY createTime DESC) qq) qqq "
+                "SELECT rn, qqq.id, qqq.title, qqq.createtime, qqq.userid, qqq.name "
+                        + "FROM (SELECT ROW_NUMBER() over (order by qq.createTime desc) rn, qq.id, qq.title, qq.createtime, qq.userid, qq.name "
+                        + "FROM (SELECT q.id, title, createTime, q.userid, u.name FROM question q INNER JOIN users u ON q.USERID = u.ID WHERE deleted = false ORDER BY createTime DESC) qq) qqq "
                         + "WHERE rn between ? and ?"
-                , questionRowMapper(), pagination.getStartNumber(), pagination.getEndNumber());
+                , questionListRowMapper(), pagination.getStartNumber(), pagination.getEndNumber());
+    }
+
+    private RowMapper<Question> questionListRowMapper() {
+        return (rs, rowNum) ->
+                Question.builder()
+                        .id(rs.getLong("id"))
+                        .title(rs.getString("title"))
+                        .createTime(rs.getTimestamp("createTime").toLocalDateTime())
+                        .writer(User.builder()
+                                .id(rs.getLong("userid"))
+                                .name(rs.getString("name"))
+                                .build())
+                        .build();
     }
 
     @Override

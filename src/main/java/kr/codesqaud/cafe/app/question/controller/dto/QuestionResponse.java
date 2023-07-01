@@ -11,7 +11,6 @@ public class QuestionResponse {
     private final String createTime;
     private final Long userId;
     private final String writer;
-    private final int commentCount;
 
     public QuestionResponse(Question question) {
         this.id = question.getId();
@@ -20,7 +19,6 @@ public class QuestionResponse {
         this.createTime = LocalDateTimeUtil.formatLocalDateTime(question.getCreateTime());
         this.userId = question.getWriter().getId();
         this.writer = question.getWriter().getName();
-        this.commentCount = question.getCommentCount();
     }
 
     public Long getId() {
@@ -47,20 +45,15 @@ public class QuestionResponse {
         return writer;
     }
 
-    public int getCommentCount() {
-        return commentCount;
-    }
-
     @Override
     public String toString() {
         return "QuestionResponse{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", content='" + content + '\'' +
-                ", createTime='" + createTime + '\'' +
-                ", userId=" + userId +
-                ", writer='" + writer + '\'' +
-                ", commentCount=" + commentCount +
-                '}';
+            "id=" + id +
+            ", title='" + title + '\'' +
+            ", content='" + content + '\'' +
+            ", createTime='" + createTime + '\'' +
+            ", userId=" + userId +
+            ", writer='" + writer + '\'' +
+            '}';
     }
 }
