@@ -1,5 +1,4 @@
-FROM openjdk:11
-VOLUME /tmp
+FROM openjdk:11-alpine
 ARG JAR_FILE=./build/libs/*.jar
 COPY ${JAR_FILE} app.jar
 ENTRYPOINT ["java","-Dspring.profiles.active=prod","-jar","app.jar"]
