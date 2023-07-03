@@ -11,14 +11,14 @@ services:
       MYSQL_HOST: db
       MYSQL_USER: root
       MYSQL_PASSWORD: yonghwan1107
-      MYSQL_PORT: 3306
+      MYSQL_PORT: 3307
     depends_on:
       - db
   db:
     container_name: be-java-cafe-max-mysql-db
     image: mysql:8.0
     ports:
-      - 3306:3306
+      - 3307:3307
     environment:
       MYSQL_ROOT_PASSWORD: yonghwan1107
       MYSQL_DATABASE: be_java_cafe_max
