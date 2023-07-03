@@ -12,4 +12,4 @@ services:
       MYSQL_HOST: mysql
       MYSQL_USER: root
       MYSQL_PASSWORD: root
-      MYSQL_DB: be_java_cafe_max
+      MYSQL_DB: be_java_cafe_max 
