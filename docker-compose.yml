@@ -8,10 +8,12 @@ services:
     volumes:
       - cafe_app:/app
     environment:
-      MYSQL_HOST: be-java-cafe-max-mysql-db
+      MYSQL_HOST: db
       MYSQL_USER: root
       MYSQL_PASSWORD: yonghwan1107
       MYSQL_PORT: 3306
+    depends_on:
+      - db
   db:
     container_name: be-java-cafe-max-mysql-db
     image: mysql:8.0
@@ -20,5 +22,8 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=yonghwan1107
       - MYSQL_DATABASE=be_java_cafe_max
+    volumes:
+      - ./db/mysql/conf.d:/etc/mysql/conf.d
+      - ./db/mysql/initdb.d:/docker-entrypoint-initdb.d
 volumes:
   cafe_app:
