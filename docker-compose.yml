@@ -5,5 +5,3 @@ services:
     image: yhkim951107/be-java-cafe-max
     ports:
       - 8080:8080
-    volumes:
-      - ./:/app
