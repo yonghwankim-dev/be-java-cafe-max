@@ -7,5 +7,18 @@ services:
       - 8080:8080
     volumes:
       - cafe_app:/app
+    environment:
+      MYSQL_HOST: be-java-cafe-max-mysql-db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: yonghwan1107
+      MYSQL_PORT: 3306
+  db:
+    container_name: be-java-cafe-max-mysql-db
+    image: mysql:8.0
+    ports:
+      - 3306:3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=yonghwan1107
+      - MYSQL_DATABASE=be_java_cafe_max
 volumes:
   cafe_app:
