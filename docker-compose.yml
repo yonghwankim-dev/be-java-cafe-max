@@ -2,6 +2,7 @@ version: "3"
 services:
   app:
     container_name: be-java-cafe-max
+    image: yhkim951107/be-java-cafe-max:latest
     depends_on:
       - db
     ports:
