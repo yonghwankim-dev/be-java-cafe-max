@@ -1,4 +1,4 @@
-version: "3"
+version: "3.8"
 services:
   app:
     container_name: be-java-cafe-max
@@ -10,10 +10,9 @@ services:
     volumes:
       - cafe_app:/app
     environment:
-      MYSQL_HOST: db
-      MYSQL_USER: root
-      MYSQL_PASSWORD: yonghwan1107
-      MYSQL_PORT: 3306
+      spring_datasource_url: jdbc:mysql://db:3306/be_java_cafe_max?useSSL=false&allowPublicKeyRetrieval=true
+      spring_datasource_username: root
+      spring_datasource_password: yonghwan1107
   db:
     container_name: be-java-cafe-max-mysql-db
     image: mysql
