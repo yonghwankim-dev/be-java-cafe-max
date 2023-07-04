@@ -28,10 +28,10 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
       # datasource.env 파일을 생성하여 설정
-      - name: make application-prod.properties
+      - name: make datasource.env
         run: |
-          touch ./datasource.env
-          echo "${{ secrets.ENV }}" > ./datasource.env
+          touch datasource.env
+          echo "${{ secrets.ENV }}" > datasource.env
       # gradlew 실행을 위해서 실행 권한을 부여
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
