@@ -21,14 +21,10 @@ public class CafeDataSourcePropertyRunner implements ApplicationRunner {
     @Value("${spring.datasource.password}")
     private String password;
 
-    @Value("${my.name}")
-    private String myName;
-
     @Override
     public void run(ApplicationArguments args) {
         logger.info("url : {}", url);
         logger.info("username : {}", username);
         logger.info("password : {}", password);
-        logger.info("myName : {}", myName);
     }
 }

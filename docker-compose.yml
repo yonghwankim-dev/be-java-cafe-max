@@ -9,11 +9,8 @@ services:
       - 8080:8080
     volumes:
       - cafe_app:/app
-    environment:
-      spring.datasource.url: jdbc:mysql://db:3306/be_java_cafe_max?useSSL=false&allowPublicKeyRetrieval=true
-      spring.datasource.username: root
-      spring.datasource.password: yonghwan1107
-      myName: yonghwan
+    env_file:
+      - datasource.env
   db:
     container_name: be-java-cafe-max-mysql-db
     image: mysql
