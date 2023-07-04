@@ -10,9 +10,9 @@ services:
     volumes:
       - cafe_app:/app
     environment:
-      spring_datasource_url: jdbc:mysql://db:3306/be_java_cafe_max?useSSL=false&allowPublicKeyRetrieval=true
-      spring_datasource_username: root
-      spring_datasource_password: yonghwan1107
+      spring.datasource.url: jdbc:mysql://db:3306/be_java_cafe_max?useSSL=false&allowPublicKeyRetrieval=true
+      spring.datasource.username: root
+      spring.datasource.password: yonghwan1107
   db:
     container_name: be-java-cafe-max-mysql-db
     image: mysql

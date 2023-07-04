@@ -73,3 +73,5 @@ jobs:
             sudo chmod 666 /var/run/docker.sock
             docker stop $(docker ps -a -q)
             docker-compose pull && docker-compose up -d
+            docker rm $(docker ps --filter 'status=exited' -a -q) 2>/dev/null
+            docker image prune -a -f
