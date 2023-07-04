@@ -2,7 +2,9 @@ version: "3"
 services:
   app:
     container_name: be-java-cafe-max
-    image: yhkim951107/be-java-cafe-max:latest
+    build: .
+    depends_on:
+      - db
     ports:
       - 8080:8080
     volumes:
@@ -12,8 +14,6 @@ services:
       MYSQL_USER: root
       MYSQL_PASSWORD: yonghwan1107
       MYSQL_PORT: 3306
-    depends_on:
-      - db
 
   db:
     container_name: be-java-cafe-max-mysql-db
