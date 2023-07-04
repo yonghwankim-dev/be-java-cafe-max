@@ -13,6 +13,7 @@ services:
       spring.datasource.url: jdbc:mysql://db:3306/be_java_cafe_max?useSSL=false&allowPublicKeyRetrieval=true
       spring.datasource.username: root
       spring.datasource.password: yonghwan1107
+      myName: yonghwan
   db:
     container_name: be-java-cafe-max-mysql-db
     image: mysql
