@@ -27,12 +27,18 @@ jobs:
         with:
           java-version: '11'
           distribution: 'temurin'
-      # datasource.env 파일을 생성하여 설정
+      # application-prod.properties 파일을 생성하여 설정
       - name: make application-prod.properties
         run: |
           cd ./src/main/resources
           touch ./application-prod.properties
           echo "${{ secrets.APPLICATION_PROD }}" > ./application-prod.properties
+          ls -l
+      # datasource.env 파일을 생성하여 설정
+      - name: make datasource.env
+        run: |
+          touch ./datasource.env
+          echo "${{ secrets.DATASOURCE_ENV }}" > ./datasource.env
           ls -l
       - name: make mysql config file
         run: |
@@ -72,7 +78,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
-          source: "docker-compose.yml"
+          source: "docker-compose.yml, datasource.env"
           target: "/home/ec2-user/"
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
