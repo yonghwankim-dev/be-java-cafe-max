@@ -75,6 +75,7 @@ jobs:
           port: 22
           source: "docker-compose.yml,./src/main/resources/env/datasource.env"
           target: "/home/ec2-user/"
+          strip_components: 1
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
         with:
