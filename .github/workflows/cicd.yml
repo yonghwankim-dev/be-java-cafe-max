@@ -34,8 +34,8 @@ jobs:
           touch ./application-prod.properties
           echo "${{ secrets.APPLICATION_PROD }}" > ./application-prod.properties
           ls -l
-      # datasource.env 파일을 생성하여 설정
-      - name: make datasource.env
+      # .env 파일을 생성하여 설정
+      - name: make .env
         run: |
           touch ./datasource.env
           echo "${{ secrets.DATASOURCE_ENV }}" > ./datasource.env
@@ -78,7 +78,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
-          source: "datasource.env"
+          source: ".env"
           target: "/home/ec2-user/"
       - name: copy file via ssh password
         uses: appleboy/scp-action@master

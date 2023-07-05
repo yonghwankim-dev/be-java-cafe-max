@@ -9,8 +9,6 @@ services:
       - 8080:8080
     volumes:
       - cafe_app:/app
-    env_file:
-      - datasource.env
   db:
     container_name: be-java-cafe-max-mysql-db
     image: mysql
@@ -23,7 +21,5 @@ services:
     volumes:
       - ./db/mysql/conf.d:/etc/mysql/conf.d
       - ./db/mysql/initdb.d:/docker-entrypoint-initdb.d
-    env_file:
-      - datasource.env
 volumes:
   cafe_app:
