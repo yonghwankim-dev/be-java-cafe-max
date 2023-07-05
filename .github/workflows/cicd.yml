@@ -64,13 +64,6 @@ jobs:
           docker build -t app .
           docker tag app ${{ secrets.DOCKER_USERNAME}}/be-java-cafe-max:latest
           docker push ${{ secrets.DOCKER_USERNAME }}/be-java-cafe-max:latest
-
-  cd-pipeline:
-    needs: build-image
-    name: continuos deploy
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
       - name: print pwd, ls
         run: |
           pwd
@@ -104,3 +97,4 @@ jobs:
             sudo chmod 666 /var/run/docker.sock
             docker stop $(docker ps -a -q) 2>/dev/null
             docker-compose pull && docker-compose up -d
+      
