@@ -79,7 +79,16 @@ jobs:
           username: ec2-user
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
-          source: "datasource.env"
+          source: "./src/main/resources/env/datasource.env"
+          target: "/home/ec2-user/"
+      - name: copy db config file via ssh password
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ec2-user
+          key: ${{ secrets.PRIVATE_KEY }}
+          port: 22
+          source: "./src/main/resources/db/"
           target: "/home/ec2-user/"
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
