@@ -28,10 +28,21 @@ jobs:
           java-version: '11'
           distribution: 'temurin'
       # datasource.env 파일을 생성하여 설정
-      #      - name: make datasource.env
-      #        run: |
-      #          touch datasource.env
-      #          echo "${{ secrets.ENV }}" > datasource.env
+      - name: make datasource.env
+        run: |
+          cd ./src/main/resources
+          mkdir ./env
+          touch ./env/datasource.env
+          echo "${{ secrets.DATASOURCE_ENV }}" > ./env/datasource.env
+      - name: make mysql config file
+        run: |
+          cd ./src/main/resources
+          mkdir -p ./db/mysql/conf.d
+          mkdir -p ./db/mysql/initdb.d
+          touch ./db/mysql/conf.d/my.cnf
+          touch ./db/mysql/initdb.d/init.sql
+          echo "${{ secrets.MYSQL_CNF }}" > ./db/mysql/conf.d/my.cnf
+          echo "${{ secrets.MYSQL_INIT }}" > ./db/mysql/initdb.d/init.sql
       # gradlew 실행을 위해서 실행 권한을 부여
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
