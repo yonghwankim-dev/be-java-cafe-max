@@ -10,7 +10,7 @@ services:
     volumes:
       - cafe_app:/app
     env_file:
-      - datasource.env
+      - src/main/resources/env/datasource.env
   db:
     container_name: be-java-cafe-max-mysql-db
     image: mysql
