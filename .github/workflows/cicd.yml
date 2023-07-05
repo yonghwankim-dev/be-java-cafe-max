@@ -37,8 +37,8 @@ jobs:
       # .env 파일을 생성하여 설정
       - name: make .env
         run: |
-          touch ./datasource.env
-          echo "${{ secrets.DATASOURCE_ENV }}" > ./datasource.env
+          touch ./.env
+          echo "${{ secrets.DATASOURCE_ENV }}" > ./.env
           ls -l
       - name: make mysql config file
         run: |
