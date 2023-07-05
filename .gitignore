@@ -38,3 +38,7 @@ out/
 
 ### Logs ###
 /logs/
+
+/src/main/resources/application-prod.properties
+/src/main/resources/db/
+.env
