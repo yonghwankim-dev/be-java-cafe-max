@@ -73,12 +73,8 @@ jobs:
           username: ec2-user
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
-          source: "docker-compose.yml"
+          source: "docker-compose.yml, .env"
           target: "/home/ec2-user/"
-      - name: copy datasource file via ssh password
-        run: |
-          scp -i ${{ secrets.PRIVATE_KEY }} -p 22 "src/main/resources/env/datasource.env" ec2-user@${{ secrets.HOST }}:/home/ec2-user/
-
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
         with:
