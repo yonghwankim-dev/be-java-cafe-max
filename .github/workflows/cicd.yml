@@ -70,7 +70,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.PRIVATE_KEY }}
           port: 22
-          source: "docker-compose.yml,src/main/resources/env/datasource.env,src/main/resources/db/"
+          source: "docker-compose.yml,datasource.env"
           target: "/home/ec2-user/"
       - name: executing remote ssh commands using password
         uses: appleboy/ssh-action@master
@@ -81,5 +81,5 @@ jobs:
           port: 22
           script: |
             sudo chmod 666 /var/run/docker.sock
-            docker stop $(docker ps -a -q)
+            docker stop $(docker ps -a -q) 2>/dev/null
             docker-compose pull && docker-compose up -d
