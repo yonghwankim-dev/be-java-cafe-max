@@ -71,6 +71,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - name: print pwd, ls
+        run: |
+          pwd
+          ls -l
       - name: copy datasource env file via ssh password
         uses: appleboy/scp-action@master
         with:
