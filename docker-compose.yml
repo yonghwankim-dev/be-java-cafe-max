@@ -9,6 +9,13 @@ services:
       - 8080:8080
     volumes:
       - cafe_app:/app
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_DRIVERCLASSNAME: com.mysql.cj.jdbc.Driver
+      SPRING_DATASOURCE_URL: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
   db:
     container_name: be-java-cafe-max-mysql-db
     image: mysql
@@ -21,5 +28,7 @@ services:
     volumes:
       - ./db/mysql/conf.d:/etc/mysql/conf.d
       - ./db/mysql/initdb.d:/docker-entrypoint-initdb.d
+    env_file:
+      - .env
 volumes:
   cafe_app:
