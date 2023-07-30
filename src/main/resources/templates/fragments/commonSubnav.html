@@ -1,21 +1,21 @@
 <th:block th:fragment="commonSubnav">
-  <div class="navbar navbar-default" id="subnav">
-    <div class="col-md-12">
-      <div class="collapse navbar-collapse" id="navbar-collapse2">
-        <ul class="nav navbar-nav navbar-right">
-          <li class="active"><a href="/">Questions</a></li>
-          <th:block th:if="${session.user == null}">
-            <li><a href="/login" role="button">로그인</a></li>
-            <li><a href="/users/new" role="button">회원가입</a></li>
-          </th:block>
-          <th:block th:if="${session.user}">
-            <li><a id="logout" role="button">로그아웃</a></li>
-            <li><a role="button" th:href="@{/users/{id}/edit(id=${session.user.id})}">개인정보수정</a>
-            </li>
-          </th:block>
+    <div class="navbar navbar-default" id="subnav">
+        <div class="col-md-12">
+            <div class="collapse navbar-collapse" id="navbar-collapse2">
+                <ul class="nav navbar-nav navbar-right">
+                    <li class="active"><a href="/">Questions</a></li>
+                    <th:block th:if="${session.user == null}">
+                        <li><a href="/login" role="button">로그인</a></li>
+                        <li><a href="/users/new" role="button">회원가입</a></li>
+                    </th:block>
+                    <th:block th:if="${session.user}">
+                        <li><a id="logout" role="button">로그아웃</a></li>
+                        <li><a role="button" th:href="@{/users/{id}/edit(id=${session.user.id})}">개인정보수정</a>
+                        </li>
+                    </th:block>
 
-        </ul>
-      </div>
+                </ul>
+            </div>
+        </div>
     </div>
-  </div>
 </th:block>

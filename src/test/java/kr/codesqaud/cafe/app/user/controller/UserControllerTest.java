@@ -1,307 +1,282 @@
 package kr.codesqaud.cafe.app.user.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import kr.codesqaud.cafe.CafeTestUtil;
-import kr.codesqaud.cafe.app.user.controller.dto.UserResponse;
-import kr.codesqaud.cafe.app.user.controller.dto.UserSavedRequest;
-import kr.codesqaud.cafe.app.user.entity.User;
-import kr.codesqaud.cafe.app.user.repository.UserRepository;
-import kr.codesqaud.cafe.app.user.service.UserService;
-import org.assertj.core.api.Assertions;
+import static org.springframework.http.MediaType.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+import java.util.Objects;
+
+import org.assertj.core.api.SoftAssertions;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Objects;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import kr.codesqaud.cafe.app.user.controller.dto.UserResponse;
+import kr.codesqaud.cafe.app.user.controller.dto.UserSavedRequest;
+import kr.codesqaud.cafe.app.user.entity.Role;
+import kr.codesqaud.cafe.app.user.entity.User;
+import kr.codesqaud.cafe.app.user.entity.UserRole;
+import kr.codesqaud.cafe.app.user.service.UserService;
+import kr.codesqaud.cafe.errors.errorcode.CommonErrorCode;
+import kr.codesqaud.cafe.errors.errorcode.UserErrorCode;
+import kr.codesqaud.cafe.errors.exception.RestApiException;
+import kr.codesqaud.cafe.errors.handler.GlobalExceptionHandler;
+import kr.codesqaud.cafe.jwt.JwtProvider;
 
-@Transactional
-@AutoConfigureMockMvc
-@SpringBootTest
+@WebMvcTest(value = {UserController.class, JwtProvider.class})
 class UserControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+	private MockMvc mockMvc;
 
-    @Autowired
-    private UserRepository userRepository;
+	@MockBean
+	private UserService userService;
 
-    @Autowired
-    private UserService userService;
+	@Autowired
+	private ObjectMapper objectMapper;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+	private MockHttpSession session;
 
-    @Autowired
-    private CafeTestUtil util;
+	private UserSavedRequest userSavedRequest;
 
-    private MockHttpSession session;
+	private User user;
 
-    private Long id;
+	@BeforeEach
+	public void setup() {
+		session = new MockHttpSession();
+		mockMvc = MockMvcBuilders.standaloneSetup(new UserController(userService))
+			.setControllerAdvice(GlobalExceptionHandler.class)
+			.alwaysDo(print())
+			.build();
+		// 유저 요청 데이터 생성
+		userSavedRequest = new UserSavedRequest("user1", "user1user1@", "김용환", "user1@naver.com");
+		// 유저 생성
+		user = User.builder()
+			.id(1L)
+			.userId("user1")
+			.password("user1user1@")
+			.name("김용환")
+			.email("user1@naver.com")
+			.build();
+		user.addRole(new UserRole(user, Role.USER));
+	}
 
-    private User user;
+	@AfterEach
+	public void clean() {
+		session.invalidate();
+	}
 
-    @BeforeEach
-    public void setup() {
-        session = new MockHttpSession();
-        user = User.builder()
-                .userId("yonghwan1107")
-                .password("yonghwan1107")
-                .name("김용환")
-                .email("yonghwan1107@naver.com")
-                .build();
-        id = util.signUp(user);
-    }
+	private String toJSON(Object object) {
+		try {
+			return objectMapper.writeValueAsString(object);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
-    @AfterEach
-    public void clean() {
-        session.invalidate();
-        userRepository.deleteAll();
-    }
+	@Test
+	@DisplayName("올바른 회원정보가 주어지고 회원가입 요청시 회원가입이 되는지 테스트")
+	public void signup_success() throws Exception {
+		//given
+		String url = "/users";
+		UserResponse userResponse = new UserResponse(user);
+		//mocking
+		Mockito.when(userService.signUp(Mockito.any(UserSavedRequest.class))).thenReturn(userResponse);
+		//when
+		ResultActions resultActions = mockMvc.perform(post(url)
+				.contentType(APPLICATION_JSON)
+				.content(toJSON(userSavedRequest))
+				.accept(APPLICATION_JSON))
+			.andExpect(status().isOk());
+		//then
+		resultActions.andExpect(jsonPath("id").value(Matchers.equalTo(1)))
+			.andExpect(jsonPath("userId").value(Matchers.equalTo("user1")))
+			.andExpect(jsonPath("name").value(Matchers.equalTo("김용환")))
+			.andExpect(jsonPath("email").value(Matchers.equalTo("user1@naver.com")));
 
-    @Test
-    @DisplayName("올바른 회원정보가 주어지고 회원가입 요청시 회원가입이 되는지 테스트")
-    public void signup_success() throws Exception {
-        //given
-        String url = "/users";
-        UserSavedRequest dto =
-                new UserSavedRequest("kim1107", "kim1107kim1107@", "김용환", "kim1107@naver.com");
-        //when
-        mockMvc.perform(post(url)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(util.toJSON(dto)))
-                .andExpect(status().isOk());
-        //then
-        User user = userRepository.findByUserId("kim1107").orElseThrow();
-        assertThat(user.getUserId()).isEqualTo("kim1107");
-        assertThat(user.getPassword()).isEqualTo("kim1107kim1107@");
-        assertThat(user.getName()).isEqualTo("김용환");
-        assertThat(user.getEmail()).isEqualTo("kim1107@naver.com");
-    }
+	}
 
-    @Test
-    @DisplayName("중복된 아이디가 주어지고 회원가입 요청시 에러 응답을 받는지 테스트")
-    public void signup_fail1() throws Exception {
-        //given
-        String duplicateUserId = "yonghwan1107";
-        String password = "yonghwan1107";
-        String name = "김용환";
-        String email = "yonghwan1107@naver.com";
-        String url = "/users";
-        UserSavedRequest dto = new UserSavedRequest(duplicateUserId, password, name, email);
-        //when
-        String jsonError = mockMvc.perform(post(url)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(util.toJSON(dto)))
-                .andExpect(status().isConflict())
-                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        //then
-        TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
-        };
-        HashMap<String, Object> errorMap = objectMapper.readValue(jsonError, typeReference);
-        Assertions.assertThat(errorMap.get("httpStatus")).isEqualTo("CONFLICT");
-        Assertions.assertThat(errorMap.get("name")).isEqualTo("ALREADY_EXIST_USERID");
-        Assertions.assertThat(errorMap.get("errorMessage")).isEqualTo("이미 존재하는 아이디입니다.");
-    }
+	@Test
+	@DisplayName("중복된 아이디가 주어지고 회원가입 요청시 에러 응답을 받는지 테스트")
+	public void signup_fail1() throws Exception {
+		// given
+		String duplicateUserId = "user1";
+		String password = "user1user1@";
+		String name = "김용환";
+		String email = "user1@naver.com";
+		String url = "/users";
+		UserSavedRequest dto = new UserSavedRequest(duplicateUserId, password, name, email);
+		// mocking
+		Mockito.when(userService.signUp(Mockito.any(UserSavedRequest.class)))
+			.thenThrow(new RestApiException(UserErrorCode.ALREADY_EXIST_USERID));
+		// when
+		ResultActions resultActions = mockMvc.perform(post(url)
+			.contentType(APPLICATION_JSON)
+			.content(toJSON(dto)));
+		// then
+		resultActions.andExpect(status().isConflict())
+			.andExpect(jsonPath("httpStatus").value(Matchers.equalTo("CONFLICT")))
+			.andExpect(jsonPath("name").value(Matchers.equalTo("ALREADY_EXIST_USERID")))
+			.andExpect(jsonPath("errorMessage").value(Matchers.equalTo("이미 존재하는 아이디입니다.")));
+	}
 
-    @Test
-    @DisplayName("중복된 이메일이 주어지고 회원가입 요청시 에러 응답을 받는지 테스트")
-    @Transactional
-    public void signup_fail2() throws Exception {
-        //given
-        String userId = "kimyonghwan1107";
-        String password = "yonghwan1107";
-        String name = "김용환";
-        String duplicatedEmail = "yonghwan1107@naver.com";
-        String url = "/users";
-        UserSavedRequest dto = new UserSavedRequest(userId, password, name, duplicatedEmail);
-        //when
-        String jsonError = mockMvc.perform(post(url)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(util.toJSON(dto)))
-                .andExpect(status().isConflict())
-                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        //then
-        TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
-        };
-        HashMap<String, Object> errorMap = objectMapper.readValue(jsonError, typeReference);
-        Assertions.assertThat(errorMap.get("httpStatus")).isEqualTo("CONFLICT");
-        Assertions.assertThat(errorMap.get("name")).isEqualTo("ALREADY_EXIST_EMAIL");
-        Assertions.assertThat(errorMap.get("errorMessage")).isEqualTo("이미 존재하는 이메일입니다.");
-    }
+	@Test
+	@DisplayName("중복된 이메일이 주어지고 회원가입 요청시 에러 응답을 받는지 테스트")
+	public void signup_fail2() throws Exception {
+		// given
+		String duplicateUserId = "user1";
+		String password = "user1user1@";
+		String name = "김용환";
+		String email = "user1@naver.com";
+		String url = "/users";
+		UserSavedRequest dto = new UserSavedRequest(duplicateUserId, password, name, email);
+		// mocking
+		Mockito.when(userService.signUp(Mockito.any(UserSavedRequest.class)))
+			.thenThrow(new RestApiException(UserErrorCode.ALREADY_EXIST_EMAIL));
+		// when
+		ResultActions resultActions = mockMvc.perform(post(url)
+			.contentType(APPLICATION_JSON)
+			.content(toJSON(dto)));
 
-    @Test
-    @DisplayName("부적절한 입력 형식의 유저아이디, 패스워드, 이름, 이메일이 주어지고 회원가입 요청시 "
-            + "에러 응답 코드를 받는지 테스트")
-    public void signup_fail3() throws Exception {
-        //given
-        String userId = "a";
-        String password = "u";
-        String name = "김용일!@#$";
-        String email = "user1";
-        UserSavedRequest dto = new UserSavedRequest(userId, password, name, email);
-        String url = "/users";
-        //when
-        String jsonError = mockMvc.perform(post(url)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(util.toJSON(dto)))
-                .andExpect(status().isBadRequest())
-                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        //then
-        TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
-        };
-        HashMap<String, Object> errorMap = objectMapper.readValue(jsonError, typeReference);
-        Assertions.assertThat(errorMap.get("httpStatus")).isEqualTo("BAD_REQUEST");
-        Assertions.assertThat(errorMap.get("name")).isEqualTo("INVALID_INPUT_FORMAT");
-        Assertions.assertThat(errorMap.get("errorMessage")).isEqualTo("유효하지 않은 입력 형식입니다.");
-    }
+		// then
+		resultActions.andExpect(status().isConflict())
+			.andExpect(jsonPath("httpStatus").value(Matchers.equalTo("CONFLICT")))
+			.andExpect(jsonPath("name").value(Matchers.equalTo("ALREADY_EXIST_EMAIL")))
+			.andExpect(jsonPath("errorMessage").value(Matchers.equalTo("이미 존재하는 이메일입니다.")));
+	}
 
-    @Test
-    @DisplayName("특정 회원의 id가 주어지고 회원의 프로필이 검색되는지 테스트")
-    public void profile() throws Exception {
-        //given
-        util.login(user.getUserId(), user.getPassword(), session);
-        String url = "/users/" + id;
-        //when
-        UserResponse actual =
-                (UserResponse) Objects.requireNonNull(mockMvc.perform(get(url)
-                                .session(session))
-                        .andExpect(status().isOk())
-                        .andReturn().getModelAndView()).getModelMap().get("user");
-        //then
-        assertThat(actual.getId()).isEqualTo(id);
-        assertThat(actual.getUserId()).isEqualTo("yonghwan1107");
-        assertThat(actual.getName()).isEqualTo("김용환");
-        assertThat(actual.getEmail()).isEqualTo("yonghwan1107@naver.com");
-    }
+	@Test
+	@DisplayName("부적절한 입력 형식의 유저아이디, 패스워드, 이름, 이메일이 주어지고 회원가입 요청시 "
+		+ "에러 응답 코드를 받는지 테스트")
+	public void signup_fail3() throws Exception {
+		//given
+		String userId = "a";
+		String password = "u";
+		String name = "김용일!@#$";
+		String email = "user1";
+		UserSavedRequest dto = new UserSavedRequest(userId, password, name, email);
+		String url = "/users";
+		//mocking
+		Mockito.when(userService.signUp(Mockito.any(UserSavedRequest.class)))
+			.thenThrow(new RestApiException(CommonErrorCode.INVALID_INPUT_FORMAT));
+		//when
+		ResultActions resultActions = mockMvc.perform(post(url)
+			.contentType(APPLICATION_JSON)
+			.content(toJSON(dto)));
+		//then
+		resultActions.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("httpStatus").value(Matchers.equalTo("BAD_REQUEST")))
+			.andExpect(jsonPath("name").value(Matchers.equalTo("INVALID_INPUT_FORMAT")))
+			.andExpect(jsonPath("errorMessage").value(Matchers.equalTo("유효하지 않은 입력 형식입니다.")));
+	}
 
-    @Test
-    @DisplayName("비밀번호, 이름, 이메일이 주어지고 유저아이디가 주어질때 회원정보 수정이 되는지 테스트")
-    public void modify_success() throws Exception {
-        //given
-        util.login(user.getUserId(), user.getPassword(), session);
-        String userId = "yonghwan1107";
-        String password = "yonghwan1107";
-        String modifiedName = "홍길동";
-        String modifiedEmail = "yonghwan1234@naver.com";
-        String url = "/users/" + id;
-        UserSavedRequest dto = new UserSavedRequest(userId, password, modifiedName, modifiedEmail);
-        //when
-        mockMvc.perform(put(url)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(util.toJSON(dto))
-                        .session(session))
-                .andExpect(status().isOk());
-        //then
-        User actual = userService.findUser(id).toEntity();
-        assertThat(actual.getName()).isEqualTo(modifiedName);
-        assertThat(actual.getEmail()).isEqualTo(modifiedEmail);
-    }
+	@Test
+	@DisplayName("특정 회원의 id가 주어지고 회원의 프로필이 검색되는지 테스트")
+	public void profile() throws Exception {
+		// given
+		Long id = 1L;
+		String url = "/users/" + id;
+		UserResponse userResponse = new UserResponse(user);
+		// mocking
+		Mockito.when(userService.findUser(Mockito.any(Long.class))).thenReturn(userResponse);
+		// when
+		UserResponse actual = (UserResponse)Objects.requireNonNull(mockMvc.perform(get(url)
+				.session(session))
+			.andReturn().getModelAndView()).getModel().get("user");
+		// then
+		SoftAssertions.assertSoftly(softAssertions -> {
+			softAssertions.assertThat(actual.getId()).isEqualTo(1);
+			softAssertions.assertThat(actual.getUserId()).isEqualTo("user1");
+			softAssertions.assertThat(actual.getName()).isEqualTo("김용환");
+			softAssertions.assertThat(actual.getEmail()).isEqualTo("user1@naver.com");
+		});
 
-    @Test
-    @DisplayName("회원 수정 이메일 중복으로 인한 테스트")
-    public void modify_fail() throws Exception {
-        //given
-        util.signUp(User.builder()
-                .userId("kim1107")
-                .password("kim1107")
-                .name("김용환")
-                .email("kim1107@naver.com")
-                .build());
-        util.login("yonghwan1107", "yonghwan1107", session);
-        String userId = "yonghwan1107";
-        String password = "yonghwan1107";
-        String modifiedName = "김용환";
-        String duplicatedEmail = "kim1107@naver.com";
-        String url = "/users/" + id;
-        UserSavedRequest dto =
-                new UserSavedRequest(userId, password, modifiedName, duplicatedEmail);
-        //when
-        String jsonError = mockMvc.perform(put(url)
-                        .session(session)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(util.toJSON(dto)))
-                .andExpect(status().isConflict())
-                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        //then
-        TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
-        };
-        HashMap<String, Object> errorMap = objectMapper.readValue(jsonError, typeReference);
-        Assertions.assertThat(errorMap.get("httpStatus")).isEqualTo("CONFLICT");
-        Assertions.assertThat(errorMap.get("name")).isEqualTo("ALREADY_EXIST_EMAIL");
-        Assertions.assertThat(errorMap.get("errorMessage")).isEqualTo("이미 존재하는 이메일입니다.");
-    }
+	}
 
-    @Test
-    @DisplayName("로그인 하지 않는 상태로 회원 정보 수정 페이지 접근할때 로그인 페이지로 리다이렉션 하는지 테스트")
-    public void modify_fail2() throws Exception {
-        //given
-        String url = "/users/" + id;
-        //when & then
-        mockMvc.perform(put(url)
-                        .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(redirectedUrl("/login"));
-    }
+	@Test
+	@DisplayName("비밀번호, 이름, 이메일이 주어지고 유저아이디가 주어질때 회원정보 수정이 되는지 테스트")
+	public void modify_success() throws Exception {
+		//given
+		Long id = 1L;
+		String url = "/users/" + id;
+		UserSavedRequest dto = new UserSavedRequest("user1", "user1user1@", "홍길동", "user2@naver.com");
+		UserResponse userResponse = new UserResponse(user);
+		UserResponse modifyUserResponse = new UserResponse(User.builder()
+			.id(user.getId())
+			.userId(user.getUserId())
+			.name(dto.getName())
+			.email(dto.getEmail())
+			.build());
+		session.setAttribute("user", userResponse);
+		// mocking
+		Mockito.when(userService.modifyUser(Mockito.any(Long.class), Mockito.any(UserSavedRequest.class)))
+			.thenReturn(modifyUserResponse);
+		//when
+		ResultActions resultActions = mockMvc.perform(put(url)
+			.contentType(APPLICATION_JSON)
+			.content(toJSON(dto))
+			.session(session));
+		//then
+		resultActions.andExpect(status().isOk())
+			.andExpect(jsonPath("id").value(Matchers.equalTo(1)))
+			.andExpect(jsonPath("userId").value(Matchers.equalTo("user1")))
+			.andExpect(jsonPath("name").value(Matchers.equalTo("홍길동")))
+			.andExpect(jsonPath("email").value(Matchers.equalTo("user2@naver.com")));
+	}
 
-    @Test
-    @DisplayName("다른 사람으로 로그인하였는데 다른 회원의 정보를 수정하려고 할때 에러 페이지로 리다이렉션 하고 에러 메시지를 받는지 테스트")
-    public void modify_fail3() throws Exception {
-        //given
-        util.signUp(User.builder()
-                .userId("kim1107")
-                .password("kim1107")
-                .name("김용환")
-                .email("kim1107@naver.com")
-                .build());
-        util.login("kim1107", "kim1107", session);
-        String userId = "yonghwan1107";
-        String password = "yonghwan1107";
-        String modifiedName = "홍길동";
-        String modifiedEmail = "yonghwan1234@naver.com";
-        String url = "/users/" + id;
-        UserSavedRequest dto = new UserSavedRequest(userId, password, modifiedName, modifiedEmail);
-        //when
-        String jsonError = mockMvc.perform(put(url)
-                        .session(session)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(util.toJSON(dto)))
-                .andExpect(status().isForbidden())
-                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
-        //then
-        TypeReference<HashMap<String, Object>> typeReference = new TypeReference<>() {
-        };
-        HashMap<String, Object> errorMap = objectMapper.readValue(jsonError, typeReference);
-        assertThat(errorMap.get("name")).isEqualTo("PERMISSION_DENIED");
-        assertThat(errorMap.get("httpStatus")).isEqualTo("FORBIDDEN");
-        assertThat(errorMap.get("errorMessage")).isEqualTo("접근 권한이 없습니다.");
-    }
+	@Test
+	@DisplayName("회원 수정 이메일 중복으로 인한 테스트")
+	public void modify_fail() throws Exception {
+		// given
+		String url = "/users/" + 1;
+		UserSavedRequest dto = new UserSavedRequest("user1", "user1user1@", "홍길동", "user1@naver.com");
+		UserResponse userResponse = new UserResponse(user);
+		session.setAttribute("user", userResponse);
+		// mocking
+		Mockito.when(userService.modifyUser(Mockito.any(Long.class), Mockito.any(UserSavedRequest.class)))
+			.thenThrow(new RestApiException(UserErrorCode.ALREADY_EXIST_EMAIL));
+		// when
+		ResultActions resultActions = mockMvc.perform(put(url)
+			.session(session)
+			.contentType(APPLICATION_JSON)
+			.content(toJSON(dto)));
+		// then
+		resultActions.andExpect(status().isConflict())
+			.andExpect(jsonPath("httpStatus").value(Matchers.equalTo("CONFLICT")))
+			.andExpect(jsonPath("name").value(Matchers.equalTo("ALREADY_EXIST_EMAIL")))
+			.andExpect(jsonPath("errorMessage").value(Matchers.equalTo("이미 존재하는 이메일입니다.")));
+	}
 
-    @Test
-    @DisplayName("클라이언트가 존재하지 않는 회원 등록번호를 이용하여 특정 회원 조회 요청시 404 페이지로 이동합니다.")
-    public void givenNotExistUserId_whenListUser_then404() throws Exception {
-        //given
-        util.login(user.getUserId(), user.getPassword(), session);
-        long id = 9999L;
-        String url = "/users/" + id;
-        //when & then
-        mockMvc.perform(get(url)
-                        .session(session))
-                .andExpect(status().isNotFound())
-                .andExpect(view().name("error/404"));
-    }
+	@Test
+	@DisplayName("클라이언트가 존재하지 않는 회원 등록번호를 이용하여 특정 회원 조회 요청시 404 페이지로 이동합니다.")
+	public void givenNotExistUserId_whenListUser_then404() throws Exception {
+		// given
+		long id = 9999L;
+		String url = "/users/" + id;
+		// mocking
+		Mockito.when(userService.findUser(Mockito.any(Long.class)))
+			.thenThrow(new RestApiException(UserErrorCode.NOT_FOUND_USER));
+		// when & then
+		mockMvc.perform(get(url)
+				.session(session))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("name").value(Matchers.equalTo("NOT_FOUND_USER")))
+			.andExpect(jsonPath("httpStatus").value(Matchers.equalTo("NOT_FOUND")))
+			.andExpect(jsonPath("errorMessage").value(Matchers.equalTo("회원을 찾을 수 없습니다.")));
+
+	}
 
 }

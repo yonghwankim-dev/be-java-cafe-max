@@ -4,63 +4,63 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       xmlns:th="http://www.thymeleaf.org">
 <head>
-  <title>스프링 카페</title>
+    <title>스프링 카페</title>
 </head>
 <body>
 <th:block layout:fragment="content">
-  <div class="container" id="main">
-    <div class="col-md-12 col-sm-12 col-lg-10 col-lg-offset-1">
-      <div class="panel panel-default qna-list">
-        <ul class="list">
-          <th:block th:each="question : ${questions}">
-            <li>
-              <div class="wrap">
-                <div class="main">
-                  <strong class="subject">
-                    <a th:href="@{/qna/{id}(id=${question.id})}"
-                       th:text="${question.title}"></a>
-                  </strong>
-                  <div class="auth-info">
-                    <i class="icon-add-comment"></i>
-                    <span class="time"
-                          th:text="${question.createTime}"></span>
-                    <a class="author" th:href="@{/users/{id}(id=${question.userId})}"
-                       th:text="${question.writer}"></a>
-                  </div>
-                  <div class="reply" title="댓글">
-                    <i class="icon-reply"></i>
-                    <span class="point">0</span>
-                  </div>
+    <div class="container" id="main">
+        <div class="col-md-12 col-sm-12 col-lg-10 col-lg-offset-1">
+            <div class="panel panel-default qna-list">
+                <ul class="list">
+                    <th:block th:each="question : ${questions}">
+                        <li>
+                            <div class="wrap">
+                                <div class="main">
+                                    <strong class="subject">
+                                        <a th:href="@{/qna/{id}(id=${question.id})}"
+                                           th:text="${question.title}"></a>
+                                    </strong>
+                                    <div class="auth-info">
+                                        <i class="icon-add-comment"></i>
+                                        <span class="time"
+                                              th:text="${question.createTime}"></span>
+                                        <a class="author" th:href="@{/users/{id}(id=${question.userId})}"
+                                           th:text="${question.writer}"></a>
+                                    </div>
+                                    <div class="reply" title="댓글">
+                                        <i class="icon-reply"></i>
+                                        <span class="point">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    </th:block>
+                </ul>
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6 text-center">
+                        <ul class="pagination center-block" style="display:inline-block;">
+                            <th:block th:if="${pagination.isExistPrev()}">
+                                <li><a th:href="@{/(page=${pagination.getPrevGroupStartPage()})}">«</a></li>
+                            </th:block>
+
+                            <th:block
+                                    th:each="page : ${#numbers.sequence(pagination.getStartPage(), pagination.getEndPage())}">
+                                <li><a th:href="@{/(page=${page})}" th:text="${page}"></a></li>
+                            </th:block>
+
+                            <th:block th:if="${pagination.isExistNext()}">
+                                <li><a th:href="@{/(page=${pagination.getNextGroupStartPage()})}">»</a></li>
+                            </th:block>
+                        </ul>
+                    </div>
+                    <div class="col-md-3 qna-write">
+                        <a class="btn btn-primary pull-right" href="/qna/new" role="button">질문하기</a>
+                    </div>
                 </div>
-              </div>
-            </li>
-          </th:block>
-        </ul>
-        <div class="row">
-          <div class="col-md-3"></div>
-          <div class="col-md-6 text-center">
-            <ul class="pagination center-block" style="display:inline-block;">
-              <th:block th:if="${pagination.isExistPrev()}">
-                <li><a th:href="@{/(page=${pagination.getPrevGroupStartPage()})}">«</a></li>
-              </th:block>
-
-              <th:block
-                  th:each="page : ${#numbers.sequence(pagination.getStartPage(), pagination.getEndPage())}">
-                <li><a th:href="@{/(page=${page})}" th:text="${page}"></a></li>
-              </th:block>
-
-              <th:block th:if="${pagination.isExistNext()}">
-                <li><a th:href="@{/(page=${pagination.getNextGroupStartPage()})}">»</a></li>
-              </th:block>
-            </ul>
-          </div>
-          <div class="col-md-3 qna-write">
-            <a class="btn btn-primary pull-right" href="/qna/new" role="button">질문하기</a>
-          </div>
+            </div>
         </div>
-      </div>
     </div>
-  </div>
 </th:block>
 </body>
 </html>
