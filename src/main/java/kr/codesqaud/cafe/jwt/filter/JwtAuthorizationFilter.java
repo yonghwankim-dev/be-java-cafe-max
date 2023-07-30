@@ -1,4 +1,4 @@
-package kr.codesqaud.cafe.jwt;
+package kr.codesqaud.cafe.jwt.filter;
 
 import java.io.IOException;
 
@@ -29,6 +29,7 @@ import kr.codesqaud.cafe.app.user.entity.Role;
 import kr.codesqaud.cafe.app.user.filter.VerifyUserFilter;
 import kr.codesqaud.cafe.errors.errorcode.LoginErrorCode;
 import kr.codesqaud.cafe.errors.exception.RestApiException;
+import kr.codesqaud.cafe.jwt.JwtProvider;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -36,7 +37,9 @@ public class JwtAuthorizationFilter implements Filter {
 
 	private static final Logger logger = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
 
-	private final String[] whiteListUris = {"/login", "/auth/refresh/token", "/users/new"};
+	private final String[] whiteListUris = {"/", "/css/*", "/js/*", "/fonts/*", "/login", "/auth/refresh/token",
+		"/users/new",
+		"/signUp"};
 
 	private final JwtProvider jwtProvider;
 	private final ObjectMapper objectMapper;
@@ -47,6 +50,7 @@ public class JwtAuthorizationFilter implements Filter {
 		ServletException {
 		HttpServletRequest httpServletRequest = (HttpServletRequest)request;
 		HttpServletResponse httpServletResponse = (HttpServletResponse)response;
+
 		if (whiteListCheck(httpServletRequest.getRequestURI())) {
 			chain.doFilter(request, response);
 			return;
@@ -60,6 +64,7 @@ public class JwtAuthorizationFilter implements Filter {
 			AuthenticateUser authenticateUser = getAuthenticateUser(token);
 			verifyAuthorization(httpServletRequest.getRequestURI(), authenticateUser);
 			logger.info("값 : {}", authenticateUser.getUserId());
+			httpServletRequest.setAttribute("user", authenticateUser);
 			chain.doFilter(request, response);
 		} catch (JsonParseException e) {
 			logger.error("JsonParseException");

@@ -12,12 +12,12 @@ $(document).ready(function () {
 
         $.ajax({
             type: "POST",
-            url: "/users",
+            url: "/signUp",
             data: JSON.stringify(data),
             contentType: 'application/json; charset=utf-8',
         }).done(function () {
             alert("회원가입이 완료되었습니다.")
-            location.href = "/users"
+            location.href = "/login"
         }).fail(function (response) {
             const errorResponse = response.responseJSON
             // 유저 아이디 중복

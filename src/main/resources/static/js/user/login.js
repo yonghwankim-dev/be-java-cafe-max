@@ -14,7 +14,6 @@ $(document).ready(function () {
             data: JSON.stringify(data),
             contentType: 'application/json; charset=utf-8',
         }).done(function (data) {
-            console.log(data)
             location.href = "/"
         }).fail(function (response) {
             const errorResponse = response.responseJSON

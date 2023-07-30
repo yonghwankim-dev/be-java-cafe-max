@@ -4,9 +4,11 @@ import javax.servlet.http.Cookie;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @RequiredArgsConstructor
 @Getter
+@ToString
 public class Jwt {
 	private static final int REFRESH_TOKEN_MAXAGE = 60 * 60 * 24 * 30; // 1달
 

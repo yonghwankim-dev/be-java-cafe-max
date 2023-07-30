@@ -18,16 +18,14 @@ import kr.codesqaud.cafe.app.user.controller.dto.UserSavedRequest;
 import kr.codesqaud.cafe.app.user.service.UserService;
 import kr.codesqaud.cafe.errors.errorcode.UserErrorCode;
 import kr.codesqaud.cafe.errors.exception.RestApiException;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 @RestController
 public class UserController {
 
 	private static final Logger log = LoggerFactory.getLogger(UserController.class);
 	private final UserService userService;
-
-	public UserController(UserService userService) {
-		this.userService = userService;
-	}
 
 	@GetMapping("/users")
 	public ModelAndView listUser() {

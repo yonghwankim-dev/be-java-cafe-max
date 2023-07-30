@@ -51,6 +51,7 @@ public class VerifyUserFilter implements Filter {
 				chain.doFilter(request, response);
 			} catch (Exception e) {
 				logger.error("Fail User Verify");
+				logger.error(e.getMessage());
 				HttpServletResponse httpServletResponse = (HttpServletResponse)response;
 				httpServletResponse.sendError(HttpStatus.BAD_REQUEST.value());
 			}
